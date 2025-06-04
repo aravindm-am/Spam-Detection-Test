@@ -1,0 +1,15 @@
+requests
+streamlit
+openai
+shap
+matplotlib
+pandas
+joblib
+databricks-sql-connector
+databricks
+scikit-learn==1.4.2
+seaborn
+minio
+numpy
+plotly
+streamlit-shap
