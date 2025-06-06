@@ -50,7 +50,8 @@ with st.sidebar:
             debug_mode = st.session_state['debug_mode']
             st.session_state.clear()
             st.session_state['debug_mode'] = debug_mode
-            st.success("Session state cleared!")            st.experimental_rerun()
+            st.success("Session state cleared!")
+            st.experimental_rerun()
 
 # Custom CSS for header styling
 st.markdown('''
