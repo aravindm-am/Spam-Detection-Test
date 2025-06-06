@@ -749,9 +749,9 @@ with tabs[0]:
                         cols[0].markdown(f'<span style="{style}">{row["Caller"]}</span>', unsafe_allow_html=True)
                         cols[1].markdown(f'<span style="{style}">{row["Prediction"]}</span>', unsafe_allow_html=True)
                         cols[2].markdown(f'<span style="{style}">{row["Anomaly Score"]}</span>', unsafe_allow_html=True)
-                        if row['Prediction'] == 'Anomaly':                            btn_key = f"add_blockchain_{row['Caller']}"
+                        if row['Prediction'] == 'Anomaly':
+                            btn_key = f"add_blockchain_{row['Caller']}"
                             response_key = f"blockchain_response_{row['Caller']}"
-                            
                             # If we already have a response for this phone number, show it
                             if response_key in st.session_state:
                                 status, message = st.session_state[response_key]
@@ -762,7 +762,16 @@ with tabs[0]:
                                 # Add a "Try Again" button if there was an error
                                 if status == "error":
                                     retry_key = f"retry_blockchain_{row['Caller']}"
-                                    if cols[3].button("Try again")                                # Process blockchain action if it's pending for this phone number
+                                    if cols[3].button("Try again", key=retry_key):
+                                        if response_key in st.session_state:
+                                            del st.session_state[response_key]
+                                        st.session_state['blockchain_action_pending'] = btn_key
+                                        st.experimental_rerun()
+                            else:
+                                if cols[3].button("Add to Blockchain", key=btn_key):
+                                    st.session_state['blockchain_action_pending'] = btn_key
+                                    st.experimental_rerun()
+                            # Process blockchain action if it's pending for this phone number
                             if st.session_state.get('blockchain_action_pending') == btn_key:
                                 # Execute the blockchain API call
                                 payload = {
@@ -782,17 +791,13 @@ with tabs[0]:
                                 }
                                 headers = {"Content-Type": "application/json"}
                                 api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
-                                  # Log the API call in debug mode
+                                # Log the API call in debug mode
                                 if st.session_state.get('debug_mode', False):
                                     st.session_state[f"blockchain_request_{row['Caller']}"] = {
                                         "url": api_url,
                                         "payload": payload,
                                         "headers": headers
                                     }
-                                
-                                headers = {"Content-Type": "application/json"}
-                                api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
-                                
                                 with st.spinner(f"Adding {row['Caller']} to blockchain..."):
                                     try:
                                         resp = requests.post(api_url, json=payload, headers=headers, timeout=10)
@@ -801,25 +806,21 @@ with tabs[0]:
                                             ccresponse = resp_json.get('ccresponse', {})
                                             res_code = ccresponse.get('resCode', resp.status_code)
                                             msg = ccresponse.get('msg', resp_json.get('status', ''))
-                                            
                                             # For debugging, store full response in session state
                                             st.session_state[f"blockchain_raw_response_{row['Caller']}"] = resp_json
-                                            
                                         except Exception:
                                             resp_json = None
                                             res_code = resp.status_code
                                             msg = resp.text
-                                              if resp.status_code == 200 and (res_code == 200 or res_code == '200'):
+                                        if resp.status_code == 200 and (res_code == 200 or res_code == '200'):
                                             st.session_state[response_key] = ("success", f"✅ Record added to blockchain. (Code: 200)")
                                         else:
                                             error_msg = f"❌ Error adding record. (Code: {res_code}) - {msg}"
-                                            # Add more detail to help debug
                                             if st.session_state.get('debug_mode', False):
                                                 error_msg += f"\nFull API Response: {resp_json}"
                                             st.session_state[response_key] = ("error", error_msg)
                                     except Exception as e:
                                         st.session_state[response_key] = ("error", f"❌ API call failed: {str(e)}")
-                                
                                 # Clear the pending action
                                 st.session_state['blockchain_action_pending'] = None
                         else:
