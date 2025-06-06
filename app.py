@@ -12,6 +12,14 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 
+# Initialize session state variables for blockchain functionality
+if 'blockchain_action_pending' not in st.session_state:
+    st.session_state['blockchain_action_pending'] = None
+
+# Debug mode flag
+if 'debug_mode' not in st.session_state:
+    st.session_state['debug_mode'] = False
+
 # Streamlit UI
 # Remove blank spaces before the title by injecting CSS to set margin-top: 0 for .block-container and .main
 st.markdown('''
@@ -30,7 +38,20 @@ st.markdown('''
   <div class="custom-header-img">
     <img src="https://passionateaboutoss.com/directory/wp-content/uploads/2019/09/Subex_logo_png-397112561.png" alt="Telecom Logo" style="height:64px;width:auto;object-fit:contain;" />
   </div>
-</div>
+</div>''')
+
+# Add a small debug toggle in the sidebar
+with st.sidebar:
+    st.session_state['debug_mode'] = st.checkbox("Enable Debugging", value=st.session_state['debug_mode'])
+    if st.session_state['debug_mode']:
+        st.info("Debug mode enabled. Blockchain API responses will be shown in detail.")
+        if st.button("Clear All Session State"):
+            # Keep only debug_mode setting
+            debug_mode = st.session_state['debug_mode']
+            st.session_state.clear()
+            st.session_state['debug_mode'] = debug_mode
+            st.success("Session state cleared!")
+            st.experimental_rerun()
 <style>
 .custom-header-box {
   display: flex;
@@ -556,6 +577,16 @@ def run_notebook(phone_number):
 # ''', unsafe_allow_html=True)
 # st.title("📞 Telecom Fraud Detection")
 
+# Sidebar for settings
+with st.sidebar:
+    st.header("Settings")
+    # Debug mode toggle (only visible in development)
+    if st.session_state.get('debug_mode', False) or 'STREAMLIT_DEBUG' in os.environ:
+        debug_toggle = st.checkbox("Debug Mode", value=st.session_state.get('debug_mode', False))
+        st.session_state['debug_mode'] = debug_toggle
+        if debug_toggle:
+            st.info("Debug mode enabled. Additional error information will be displayed.")
+
 # Change the order of tabs - Combined Analysis first, Individual Analysis second
 tabs = st.tabs(["📊 Combined Analysis", "🔎 Individual Analysis"])
 
@@ -716,21 +747,22 @@ with tabs[0]:
                         cols[0].markdown(f'<span style="{style}">{row["Caller"]}</span>', unsafe_allow_html=True)
                         cols[1].markdown(f'<span style="{style}">{row["Prediction"]}</span>', unsafe_allow_html=True)
                         cols[2].markdown(f'<span style="{style}">{row["Anomaly Score"]}</span>', unsafe_allow_html=True)
-                        if row['Prediction'] == 'Anomaly':
-                            btn_key = f"add_blockchain_{row['Caller']}"
+                        if row['Prediction'] == 'Anomaly':                            btn_key = f"add_blockchain_{row['Caller']}"
                             response_key = f"blockchain_response_{row['Caller']}"
-                            # Check if the button was pressed in this rerun
-                            if st.session_state.get('last_btn_pressed') == btn_key:
-                                # Show the response if present
-                                if response_key in st.session_state:
-                                    status, message = st.session_state[response_key]
-                                    if status == "success":
-                                        cols[3].success(message)
-                                    else:
-                                        cols[3].error(message)
-                            if cols[3].button("Add to Blockchain", key=btn_key):
-                                # Save which button was pressed
-                                st.session_state['last_btn_pressed'] = btn_key
+                            
+                            # If we already have a response for this phone number, show it
+                            if response_key in st.session_state:
+                                status, message = st.session_state[response_key]
+                                if status == "success":
+                                    cols[3].success(message)
+                                else:
+                                    cols[3].error(message)
+                                # Add a "Try Again" button if there was an error
+                                if status == "error":
+                                    retry_key = f"retry_blockchain_{row['Caller']}"
+                                    if cols[3].button("Try                                 # Process blockchain action if it's pending for this phone number
+                            if st.session_state.get('blockchain_action_pending') == btn_key:
+                                # Execute the blockchain API call
                                 payload = {
                                     "requestId": "000001",
                                     "module": "tmforum",
@@ -748,24 +780,54 @@ with tabs[0]:
                                 }
                                 headers = {"Content-Type": "application/json"}
                                 api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
-                                try:
-                                    resp = requests.post(api_url, json=payload, headers=headers, timeout=10)
+                                
+                                # Log the API call in debug mode
+                                if st.session_state.get('debug_mode', False):
+                                    st.session_state[f"blockchain_request_{row['Caller']}"] = {
+                                        "url": api_url,
+                                        "payload": payload,
+                                        "headers": headers
+                                    }
+                                        "msisdn": str(row['Caller']),
+                                        "src_o": "Jio",
+                                        "src_c": "India",
+                                        "rep_o": "Airtel",
+                                        "rep_c": "India",
+                                        "score": float(row['Anomaly Score'])
+                                    }
+                                }
+                                headers = {"Content-Type": "application/json"}
+                                api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
+                                
+                                with st.spinner(f"Adding {row['Caller']} to blockchain..."):
                                     try:
-                                        resp_json = resp.json()
-                                        ccresponse = resp_json.get('ccresponse', {})
-                                        res_code = ccresponse.get('resCode', resp.status_code)
-                                        msg = ccresponse.get('msg', resp_json.get('status', ''))
-                                    except Exception:
-                                        resp_json = None
-                                        res_code = resp.status_code
-                                        msg = resp.text
-                                    if resp.status_code == 200 and (res_code == 200 or res_code == '200'):
-                                        st.session_state[response_key] = ("success", f"✅ Record added to blockchain. (Code: 200)")
-                                    else:
-                                        st.session_state[response_key] = ("error", f"❌ Error adding record. (Code: {res_code}) - {msg}")
-                                except Exception as e:
-                                    st.session_state[response_key] = ("error", f"❌ API call failed. Blockchain API call failed: {e}")
-                                st.experimental_rerun()
+                                        resp = requests.post(api_url, json=payload, headers=headers, timeout=10)
+                                        try:
+                                            resp_json = resp.json()
+                                            ccresponse = resp_json.get('ccresponse', {})
+                                            res_code = ccresponse.get('resCode', resp.status_code)
+                                            msg = ccresponse.get('msg', resp_json.get('status', ''))
+                                            
+                                            # For debugging, store full response in session state
+                                            st.session_state[f"blockchain_raw_response_{row['Caller']}"] = resp_json
+                                            
+                                        except Exception:
+                                            resp_json = None
+                                            res_code = resp.status_code
+                                            msg = resp.text
+                                              if resp.status_code == 200 and (res_code == 200 or res_code == '200'):
+                                            st.session_state[response_key] = ("success", f"✅ Record added to blockchain. (Code: 200)")
+                                        else:
+                                            error_msg = f"❌ Error adding record. (Code: {res_code}) - {msg}"
+                                            # Add more detail to help debug
+                                            if st.session_state.get('debug_mode', False):
+                                                error_msg += f"\nFull API Response: {resp_json}"
+                                            st.session_state[response_key] = ("error", error_msg)
+                                    except Exception as e:
+                                        st.session_state[response_key] = ("error", f"❌ API call failed: {str(e)}")
+                                
+                                # Clear the pending action
+                                st.session_state['blockchain_action_pending'] = None
                         else:
                             cols[3].markdown("")
                 else:
