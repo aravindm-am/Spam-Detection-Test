@@ -719,7 +719,18 @@ with tabs[0]:
                         if row['Prediction'] == 'Anomaly':
                             btn_key = f"add_blockchain_{row['Caller']}"
                             response_key = f"blockchain_response_{row['Caller']}"
+                            # Check if the button was pressed in this rerun
+                            if st.session_state.get('last_btn_pressed') == btn_key:
+                                # Show the response if present
+                                if response_key in st.session_state:
+                                    status, message = st.session_state[response_key]
+                                    if status == "success":
+                                        cols[3].success(message)
+                                    else:
+                                        cols[3].error(message)
                             if cols[3].button("Add to Blockchain", key=btn_key):
+                                # Save which button was pressed
+                                st.session_state['last_btn_pressed'] = btn_key
                                 payload = {
                                     "requestId": "000001",
                                     "module": "tmforum",
@@ -754,13 +765,7 @@ with tabs[0]:
                                         st.session_state[response_key] = ("error", f"❌ Error adding record. (Code: {res_code}) - {msg}")
                                 except Exception as e:
                                     st.session_state[response_key] = ("error", f"❌ API call failed. Blockchain API call failed: {e}")
-                            # Show the response if present
-                            if response_key in st.session_state:
-                                status, message = st.session_state[response_key]
-                                if status == "success":
-                                    cols[3].success(message)
-                                else:
-                                    cols[3].error(message)
+                                st.experimental_rerun()
                         else:
                             cols[3].markdown("")
                 else:
