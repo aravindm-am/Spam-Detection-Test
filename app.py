@@ -643,17 +643,80 @@ except Exception:
 
 # Tab 1: Combined Analysis (now first)
 with tabs[0]:
-    # --- Batch scoring UI ---
+    # --- Batch screening UI ---
     st.markdown("#### <span style='color:#007BFF;'>Batch Screening</span>", unsafe_allow_html=True)
     st.info("The input file is preloaded and hardcoded in the backend. Click 'Start Screening' to run the ML model on the data.")
     if st.button("Start Screening", key="start_screening_button"):
-        with st.spinner("Running ML model on the input file..."):
-            # Simulate backend batch scoring (call Databricks notebook or local function)
-            # Here, you would trigger the batch job/notebook as before, but without file upload
-            # For demonstration, you can show a success message or display hardcoded results
-            st.success("✅ Screening complete! Results are available below.")
-            # Optionally, set a flag in session_state to show results
-            st.session_state['screening_complete'] = True
+        with st.spinner("Screening started. Running ML model on the input file..."):
+            # Just run the Databricks notebook (databricks-new.py) and display the JSON output
+            headers = {
+                "Authorization": f"Bearer {DATABRICKS_TOKEN}",
+                "Content-Type": "application/json"
+            }
+            EXISTING_CLUSTER_ID = "0521-131856-gsh3b6se"
+            batch_notebook_path = DATABRICKS_NOTEBOOK_PATH_BATCH  # Path to databricks-new.py
+            submit_payload = {
+                "run_name": f"BatchFraudCheck_{int(time.time())}",
+                "notebook_task": {
+                    "notebook_path": batch_notebook_path,
+                    "base_parameters": {}  # No need to pass input_file if hardcoded
+                },
+                "existing_cluster_id": EXISTING_CLUSTER_ID        
+            }
+            response = requests.post(
+                f"{DATABRICKS_HOST}/api/2.1/jobs/runs/submit",
+                headers=headers,
+                json=submit_payload
+            )
+            if response.status_code != 200:
+                st.error("❌ Failed to start Databricks batch job.")
+                st.text(response.text)
+            else:
+                run_id = response.json()["run_id"]
+                status_placeholder = st.empty()
+                while True:
+                    status_response = requests.get(
+                        f"{DATABRICKS_HOST}/api/2.1/jobs/runs/get?run_id={run_id}",
+                        headers=headers
+                    )
+                    run_state = status_response.json()["state"]["life_cycle_state"]
+                    if run_state in ("TERMINATED", "SKIPPED", "INTERNAL_ERROR"):
+                        break
+                    time.sleep(1)
+                status_placeholder.empty()
+                result = status_response.json()
+                result_state = result.get("state", {}).get("result_state", "UNKNOWN")
+                notebook_output = None
+                if result_state == "SUCCESS":
+                    output_response = requests.get(
+                        f"{DATABRICKS_HOST}/api/2.1/jobs/runs/get-output?run_id={run_id}",
+                        headers=headers
+                    )
+                    if output_response.status_code == 200:
+                        notebook_result = output_response.json().get("notebook_output", {})
+                        notebook_output = notebook_result.get("result", None)
+                        if isinstance(notebook_output, str):
+                            try:
+                                notebook_output = json.loads(notebook_output)
+                            except:
+                                pass
+                if notebook_output and "results" in notebook_output:
+                    st.markdown("#### <span style='color:#007BFF;'>📋 Scoring Results</span>", unsafe_allow_html=True)
+                    results_df = pd.DataFrame(notebook_output["results"])
+                    results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
+                    def highlight_anomaly(row):
+                        if row['Prediction'] == 'Anomaly':
+                            return ['color: red; font-weight: normal;', 'color: red; font-weight: normal;', 'color: red; font-weight: normal;']
+                        else:
+                            return ['', '', '']
+                    styled_df = results_df.style.apply(highlight_anomaly, axis=1)
+                    styled_df = styled_df.set_properties(**{'font-size': '1.1em'})
+                    styled_df = styled_df.set_table_styles([
+                        dict(selector='th', props=[('color', '#1a237e'), ('font-weight', 'bold'), ('font-size', '1.1em')])
+                    ])
+                    st.write(styled_df.to_html(escape=False), unsafe_allow_html=True)
+                else:
+                    st.warning("No results found in notebook output.")
     # Always show the hardcoded plots below the screening UI
     # Check if we have a real analysis or should use the hardcoded data
     if 'shap_data' in st.session_state and 'combined_analysis' in st.session_state.shap_data:
