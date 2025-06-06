@@ -704,17 +704,87 @@ with tabs[0]:
                     st.markdown("#### <span style='color:#007BFF;'>📋 Scoring Results</span>", unsafe_allow_html=True)
                     results_df = pd.DataFrame(notebook_output["results"])
                     results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
-                    def highlight_anomaly(row):
+                    # Add a column for blockchain action (only for Anomaly)
+                    def blockchain_action_ui(row):
                         if row['Prediction'] == 'Anomaly':
-                            return ['color: red; font-weight: normal;', 'color: red; font-weight: normal;', 'color: red; font-weight: normal;']
+                            btn_key = f"add_blockchain_{row['Caller']}"
+                            if st.button("Add to Blockchain", key=btn_key):
+                                # Prepare API payload (example static org/country, real values should be dynamic)
+                                payload = {
+                                    "requestId": "000001",
+                                    "module": "tmforum",
+                                    "channelID": "globalspamdatachannel",
+                                    "chaincodeID": "qotcc",
+                                    "functionName": "addQoTRecord",
+                                    "payload": {
+                                        "msisdn": str(row['Caller']),
+                                        "src_o": "Jio",
+                                        "src_c": "India",
+                                        "rep_o": "Airtel",
+                                        "rep_c": "India",
+                                        "score": float(row['Anomaly Score'])
+                                    }
+                                }
+                                headers = {"Content-Type": "application/json"}
+                                api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
+                                try:
+                                    resp = requests.post(api_url, json=payload, headers=headers, timeout=10)
+                                    if resp.status_code == 200:
+                                        st.success(f"Added {row['Caller']} to blockchain.")
+                                    else:
+                                        st.error(f"Blockchain API error: {resp.status_code}")
+                                except Exception as e:
+                                    st.error(f"Blockchain API call failed: {e}")
+                            return True
+                        return False
+                    # Build table with action buttons
+                    table_rows = []
+                    for idx, row in results_df.iterrows():
+                        row_dict = row.to_dict()
+                        if row_dict['Prediction'] == 'Anomaly':
+                            action_placeholder = st.empty()
+                            with action_placeholder.container():
+                                blockchain_action_ui(row_dict)
+                            table_rows.append({**row_dict, 'Add to Blockchain': action_placeholder})
                         else:
-                            return ['', '', '']
-                    styled_df = results_df.style.apply(highlight_anomaly, axis=1)
+                            table_rows.append({**row_dict, 'Add to Blockchain': ''})
+                    # Display styled table (without buttons, just for view)
+                    styled_df = results_df.style.apply(lambda r: ['color: red; font-weight: normal;' if r['Prediction']=='Anomaly' else '' for _ in r], axis=1)
                     styled_df = styled_df.set_properties(**{'font-size': '1.1em'})
                     styled_df = styled_df.set_table_styles([
                         dict(selector='th', props=[('color', '#1a237e'), ('font-weight', 'bold'), ('font-size', '1.1em')])
                     ])
                     st.write(styled_df.to_html(escape=False), unsafe_allow_html=True)
+                    # Show action buttons below the table for each anomaly
+                    for idx, row in results_df.iterrows():
+                        if row['Prediction'] == 'Anomaly':
+                            btn_key = f"add_blockchain_{row['Caller']}"
+                            if st.button(f"Add {row['Caller']} to Blockchain", key=btn_key):
+                                payload = {
+                                    "requestId": "000001",
+                                    "module": "tmforum",
+                                    "channelID": "globalspamdatachannel",
+                                    "chaincodeID": "qotcc",
+                                    "functionName": "addQoTRecord",
+                                    "payload": {
+                                        "msisdn": str(row['Caller']),
+                                        "src_o": "Jio",
+                                        "src_c": "India",
+                                        "rep_o": "Airtel",
+                                        "rep_c": "India",
+                                        "score": float(row['Anomaly Score'])
+                                    }
+                                }
+                                headers = {"Content-Type": "application/json"}
+                                api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
+                                try:
+                                    resp = requests.post(api_url, json=payload, headers=headers, timeout=10)
+                                    if resp.status_code == 200:
+                                        st.success(f"Added {row['Caller']} to blockchain.")
+                                    else:
+                                        st.error(f"Blockchain API error: {resp.status_code}")
+                                except Exception as e:
+                                    st.error(f"Blockchain API call failed: {e}")
                 else:
                     st.warning("No results found in notebook output.")
     # Always show the hardcoded plots below the screening UI
