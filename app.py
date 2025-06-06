@@ -704,66 +704,48 @@ with tabs[0]:
                     st.markdown("#### <span style='color:#007BFF;'>📋 Scoring Results</span>", unsafe_allow_html=True)
                     results_df = pd.DataFrame(notebook_output["results"])
                     results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
-                    # Build the table with a button in the 'Add to Blockchain' column for anomalies only
-                    def blockchain_table():
-                        table_cols = ['Caller', 'Prediction', 'Anomaly Score', 'Add to Blockchain']
-                        table_data = []
-                        for idx, row in results_df.iterrows():
-                            row_cells = []
-                            # Style anomaly rows
-                            style = 'color: red;' if row['Prediction'] == 'Anomaly' else ''
-                            row_cells.append(f'<span style="{style}">{row["Caller"]}</span>')
-                            row_cells.append(f'<span style="{style}">{row["Prediction"]}</span>')
-                            row_cells.append(f'<span style="{style}">{row["Anomaly Score"]}</span>')
-                            if row['Prediction'] == 'Anomaly':
-                                btn_key = f"add_blockchain_{row['Caller']}"
-                                # Use st.form to allow button in table cell
-                                with st.form(key=btn_key):
-                                    submitted = st.form_submit_button("Add to Blockchain")
-                                    if submitted:
-                                        payload = {
-                                            "requestId": "000001",
-                                            "module": "tmforum",
-                                            "channelID": "globalspamdatachannel",
-                                            "chaincodeID": "qotcc",
-                                            "functionName": "addQoTRecord",
-                                            "payload": {
-                                                "msisdn": str(row['Caller']),
-                                                "src_o": "Jio",
-                                                "src_c": "India",
-                                                "rep_o": "Airtel",
-                                                "rep_c": "India",
-                                                "score": float(row['Anomaly Score'])
-                                            }
-                                        }
-                                        headers = {"Content-Type": "application/json"}
-                                        api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
-                                        try:
-                                            resp = requests.post(api_url, json=payload, headers=headers, timeout=10)
-                                            if resp.status_code == 200:
-                                                st.success(f"Added {row['Caller']} to blockchain.")
-                                            else:
-                                                st.error(f"Blockchain API error: {resp.status_code}")
-                                        except Exception as e:
-                                            st.error(f"Blockchain API call failed: {e}")
-                                # Render the button placeholder (will be replaced by the form above)
-                                row_cells.append(f'<div id="{btn_key}"></div>')
-                            else:
-                                row_cells.append('')
-                            table_data.append(row_cells)
-                        # Build HTML table (buttons will be rendered by Streamlit forms above)
-                        table_html = '<table style="width:100%;font-size:1.1em"><tr>'
-                        for col in table_cols:
-                            table_html += f'<th style="color:#1a237e;font-weight:bold;font-size:1.1em">{col}</th>'
-                        table_html += '</tr>'
-                        for row_cells in table_data:
-                            table_html += '<tr>'
-                            for cell in row_cells:
-                                table_html += f'<td>{cell}</td>'
-                            table_html += '</tr>'
-                        table_html += '</table>'
-                        st.markdown(table_html, unsafe_allow_html=True)
-                    blockchain_table()
+                    # Build the table using Streamlit columns so buttons are inside the table
+                    header_cols = st.columns([2, 2, 2, 2])
+                    header_cols[0].markdown("<b>Caller</b>", unsafe_allow_html=True)
+                    header_cols[1].markdown("<b>Prediction</b>", unsafe_allow_html=True)
+                    header_cols[2].markdown("<b>Anomaly Score</b>", unsafe_allow_html=True)
+                    header_cols[3].markdown("<b>Add to Blockchain</b>", unsafe_allow_html=True)
+                    for idx, row in results_df.iterrows():
+                        cols = st.columns([2, 2, 2, 2])
+                        style = 'color: red;' if row['Prediction'] == 'Anomaly' else ''
+                        cols[0].markdown(f'<span style="{style}">{row["Caller"]}</span>', unsafe_allow_html=True)
+                        cols[1].markdown(f'<span style="{style}">{row["Prediction"]}</span>', unsafe_allow_html=True)
+                        cols[2].markdown(f'<span style="{style}">{row["Anomaly Score"]}</span>', unsafe_allow_html=True)
+                        if row['Prediction'] == 'Anomaly':
+                            btn_key = f"add_blockchain_{row['Caller']}"
+                            if cols[3].button("Add to Blockchain", key=btn_key):
+                                payload = {
+                                    "requestId": "000001",
+                                    "module": "tmforum",
+                                    "channelID": "globalspamdatachannel",
+                                    "chaincodeID": "qotcc",
+                                    "functionName": "addQoTRecord",
+                                    "payload": {
+                                        "msisdn": str(row['Caller']),
+                                        "src_o": "Jio",
+                                        "src_c": "India",
+                                        "rep_o": "Airtel",
+                                        "rep_c": "India",
+                                        "score": float(row['Anomaly Score'])
+                                    }
+                                }
+                                headers = {"Content-Type": "application/json"}
+                                api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
+                                try:
+                                    resp = requests.post(api_url, json=payload, headers=headers, timeout=10)
+                                    if resp.status_code == 200:
+                                        cols[3].success(f"Added {row['Caller']} to blockchain.")
+                                    else:
+                                        cols[3].error(f"Blockchain API error: {resp.status_code}")
+                                except Exception as e:
+                                    cols[3].error(f"Blockchain API call failed: {e}")
+                        else:
+                            cols[3].markdown("")
                 else:
                     st.warning("No results found in notebook output.")
     # Always show the hardcoded plots below the screening UI
