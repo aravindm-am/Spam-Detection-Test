@@ -81,9 +81,6 @@ st.markdown('''
 }
 @media (max-width: 700px) {
   .custom-header-box { flex-direction: column; align-items: flex-start; padding: 18px 12px 12px 12px; }
-}
-</style>
-''', unsafe_allow_html=True)
   .custom-header-img { margin-left: 0; margin-top: 12px; }
 }
 </style>
