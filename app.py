@@ -782,22 +782,14 @@ with tabs[0]:
                                 }
                                 headers = {"Content-Type": "application/json"}
                                 api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
-                                
-                                # Log the API call in debug mode
+                                  # Log the API call in debug mode
                                 if st.session_state.get('debug_mode', False):
                                     st.session_state[f"blockchain_request_{row['Caller']}"] = {
                                         "url": api_url,
                                         "payload": payload,
                                         "headers": headers
                                     }
-                                        "msisdn": str(row['Caller']),
-                                        "src_o": "Jio",
-                                        "src_c": "India",
-                                        "rep_o": "Airtel",
-                                        "rep_c": "India",
-                                        "score": float(row['Anomaly Score'])
-                                    }
-                                }
+                                
                                 headers = {"Content-Type": "application/json"}
                                 api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
                                 
