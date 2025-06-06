@@ -738,11 +738,24 @@ with tabs[0]:
                                 api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
                                 try:
                                     resp = requests.post(api_url, json=payload, headers=headers, timeout=10)
+                                    # Try to parse JSON for logical errors
+                                    try:
+                                        resp_json = resp.json()
+                                        ccresponse = resp_json.get('ccresponse', {})
+                                        res_code = ccresponse.get('resCode')
+                                        msg = ccresponse.get('msg')
+                                    except Exception:
+                                        resp_json = None
+                                        res_code = None
+                                        msg = None
                                     if resp.status_code == 200:
-                                        cols[3].success(f"✅ API call successful. Added {row['Caller']} to blockchain.")
+                                        if res_code is not None and res_code != 200:
+                                            cols[3].error(f"❌ API call failed. Blockchain error: {msg} (resCode: {res_code})")
+                                        else:
+                                            cols[3].success(f"✅ API call successful. Added {row['Caller']} to blockchain.")
                                     else:
                                         try:
-                                            error_msg = resp.json().get('error', resp.text)
+                                            error_msg = resp_json.get('error', resp.text) if resp_json else resp.text
                                         except Exception:
                                             error_msg = resp.text
                                         cols[3].error(f"❌ API call failed. Blockchain API error: {resp.status_code} - {error_msg}")
