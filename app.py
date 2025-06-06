@@ -736,24 +736,30 @@ with tabs[0]:
                                         st.error(f"Blockchain API error: {resp.status_code}")
                                 except Exception as e:
                                     st.error(f"Blockchain API call failed: {e}")
-                            add_col.append('Add to Blockchain')
+                            add_col.append(st.button("Add to Blockchain", key=f"table_btn_{row['Caller']}"))
                         else:
-                            add_col.append('')
+                            add_col.append("")
                     # Add the column to the DataFrame for display
                     display_df = results_df.copy()
                     display_df['Add to Blockchain'] = add_col
-                    # Style the table: highlight anomalies, and show the button only for anomalies
-                    def highlight_anomaly(row):
-                        if row['Prediction'] == 'Anomaly':
-                            return ['color: red; font-weight: normal;', 'color: red; font-weight: normal;', 'color: red; font-weight: normal;', '']
-                        else:
-                            return ['', '', '', '']
-                    styled_df = display_df.style.apply(highlight_anomaly, axis=1)
-                    styled_df = styled_df.set_properties(**{'font-size': '1.1em'})
-                    styled_df = styled_df.set_table_styles([
-                        dict(selector='th', props=[('color', '#1a237e'), ('font-weight', 'bold'), ('font-size', '1.1em')])
-                    ])
-                    st.write(styled_df.to_html(escape=False), unsafe_allow_html=True)
+                    # Display the table with clickable buttons for anomalies
+                    def render_row(row):
+                        style = "color: red; font-weight: normal;" if row['Prediction'] == 'Anomaly' else ""
+                        return [f'<span style="{style}">{row["Caller"]}</span>',
+                                f'<span style="{style}">{row["Prediction"]}</span>',
+                                f'<span style="{style}">{row["Anomaly Score"]}</span>',
+                                row['Add to Blockchain'] if row['Prediction'] == 'Anomaly' else '']
+                    table_html = '<table style="width:100%;font-size:1.1em"><tr>'
+                    for col in display_df.columns:
+                        table_html += f'<th style="color:#1a237e;font-weight:bold;font-size:1.1em">{col}</th>'
+                    table_html += '</tr>'
+                    for idx, row in display_df.iterrows():
+                        table_html += '<tr>'
+                        for cell in render_row(row):
+                            table_html += f'<td>{cell}</td>'
+                        table_html += '</tr>'
+                    table_html += '</table>'
+                    st.markdown(table_html, unsafe_allow_html=True)
                 else:
                     st.warning("No results found in notebook output.")
     # Always show the hardcoded plots below the screening UI
