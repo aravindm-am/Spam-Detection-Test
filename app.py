@@ -705,12 +705,46 @@ with tabs[0]:
                     results_df = pd.DataFrame(notebook_output["results"])
                     results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
                     # Build a new DataFrame with an 'Add to Blockchain' column (button for Anomaly only)
-                    add_col = []
+                    display_rows = []
+                    for idx, row in results_df.iterrows():
+                        row_dict = row.to_dict()
+                        if row_dict['Prediction'] == 'Anomaly':
+                            btn_key = f"add_blockchain_{row_dict['Caller']}"
+                            # Render the button in the table cell using st.button inside st.markdown with unique key
+                            button_html = f'''<form action="#" method="post">
+                                <button type="submit" name="{btn_key}" style="background: linear-gradient(90deg, #007BFF 0%, #0056b3 100%); color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; padding: 0.4em 1.2em; cursor: pointer;">Add to Blockchain</button>
+                            </form>'''
+                            display_rows.append({
+                                'Caller': f'<span style="color: red;">{row_dict["Caller"]}</span>',
+                                'Prediction': f'<span style="color: red;">{row_dict["Prediction"]}</span>',
+                                'Anomaly Score': f'<span style="color: red;">{row_dict["Anomaly Score"]}</span>',
+                                'Add to Blockchain': button_html
+                            })
+                        else:
+                            display_rows.append({
+                                'Caller': row_dict['Caller'],
+                                'Prediction': row_dict['Prediction'],
+                                'Anomaly Score': row_dict['Anomaly Score'],
+                                'Add to Blockchain': ''
+                            })
+                    # Render the table with HTML (buttons for anomalies only)
+                    table_html = '<table style="width:100%;font-size:1.1em"><tr>'
+                    for col in ['Caller', 'Prediction', 'Anomaly Score', 'Add to Blockchain']:
+                        table_html += f'<th style="color:#1a237e;font-weight:bold;font-size:1.1em">{col}</th>'
+                    table_html += '</tr>'
+                    for row in display_rows:
+                        table_html += '<tr>'
+                        for col in ['Caller', 'Prediction', 'Anomaly Score', 'Add to Blockchain']:
+                            table_html += f'<td>{row[col]}</td>'
+                        table_html += '</tr>'
+                    table_html += '</table>'
+                    st.markdown(table_html, unsafe_allow_html=True)
+
+                    # Handle button clicks for blockchain (using session_state workaround)
                     for idx, row in results_df.iterrows():
                         if row['Prediction'] == 'Anomaly':
                             btn_key = f"add_blockchain_{row['Caller']}"
-                            add_btn = st.button("Add to Blockchain", key=btn_key)
-                            if add_btn:
+                            if st.session_state.get(btn_key, False):
                                 payload = {
                                     "requestId": "000001",
                                     "module": "tmforum",
@@ -736,30 +770,7 @@ with tabs[0]:
                                         st.error(f"Blockchain API error: {resp.status_code}")
                                 except Exception as e:
                                     st.error(f"Blockchain API call failed: {e}")
-                            add_col.append(st.button("Add to Blockchain", key=f"table_btn_{row['Caller']}"))
-                        else:
-                            add_col.append("")
-                    # Add the column to the DataFrame for display
-                    display_df = results_df.copy()
-                    display_df['Add to Blockchain'] = add_col
-                    # Display the table with clickable buttons for anomalies
-                    def render_row(row):
-                        style = "color: red; font-weight: normal;" if row['Prediction'] == 'Anomaly' else ""
-                        return [f'<span style="{style}">{row["Caller"]}</span>',
-                                f'<span style="{style}">{row["Prediction"]}</span>',
-                                f'<span style="{style}">{row["Anomaly Score"]}</span>',
-                                row['Add to Blockchain'] if row['Prediction'] == 'Anomaly' else '']
-                    table_html = '<table style="width:100%;font-size:1.1em"><tr>'
-                    for col in display_df.columns:
-                        table_html += f'<th style="color:#1a237e;font-weight:bold;font-size:1.1em">{col}</th>'
-                    table_html += '</tr>'
-                    for idx, row in display_df.iterrows():
-                        table_html += '<tr>'
-                        for cell in render_row(row):
-                            table_html += f'<td>{cell}</td>'
-                        table_html += '</tr>'
-                    table_html += '</table>'
-                    st.markdown(table_html, unsafe_allow_html=True)
+                                st.session_state[btn_key] = False
                 else:
                     st.warning("No results found in notebook output.")
     # Always show the hardcoded plots below the screening UI
