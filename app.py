@@ -34,11 +34,11 @@ st.markdown('''
 <div class="custom-header-box">
   <div class="custom-header-title">
     <span style="font-size:2.8rem;font-weight:800;color:#1a237e;vertical-align:middle;">📞 Telecom Fraud Detection</span>
-  </div>
-  <div class="custom-header-img">
+  </div>  <div class="custom-header-img">
     <img src="https://passionateaboutoss.com/directory/wp-content/uploads/2019/09/Subex_logo_png-397112561.png" alt="Telecom Logo" style="height:64px;width:auto;object-fit:contain;" />
   </div>
-</div>''')
+</div>
+''', unsafe_allow_html=True)
 
 # Add a small debug toggle in the sidebar
 with st.sidebar:
@@ -81,6 +81,9 @@ st.markdown('''
 }
 @media (max-width: 700px) {
   .custom-header-box { flex-direction: column; align-items: flex-start; padding: 18px 12px 12px 12px; }
+}
+</style>
+''', unsafe_allow_html=True)
   .custom-header-img { margin-left: 0; margin-top: 12px; }
 }
 </style>
@@ -100,29 +103,28 @@ body, .main, .block-container {
     font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
 }
 
-# /* Remove blank spaces before the title */
-# .block-container { margin-top: 0 !important; }
-# section.main { padding-top: 0 !important; }
+/* Remove blank spaces before the title */
+/* .block-container { margin-top: 0 !important; }
+section.main { padding-top: 0 !important; } */
 
-# /* Card-like containers */
-# .stContainer, .st-cb, .st-bb, .st-cg, .st-cf, .st-cd, .st-ce {
-#     background: #fff !important;
-#     border-radius: 18px !important;
-#     box-shadow: 0 2px 12px 0 rgba(0,0,0,0.07) !important;
-#     padding: 24px 24px 16px 24px !important;
-#     margin-bottom: 18px !important;
-# }
+/* Card-like containers */
+/* .stContainer, .st-cb, .st-bb, .st-cg, .st-cf, .st-cd, .st-ce { */
+/*     background: #fff !important;
+     border-radius: 18px !important;
+     box-shadow: 0 2px 12px 0 rgba(0,0,0,0.07) !important;
+     padding: 24px 24px 16px 24px !important;
+     margin-bottom: 18px !important;
+ } */
 
-# /* Remove empty card/box below tabs */
-# .stContainer:empty, .st-cb:empty, .st-bb:empty, .st-cg:empty, .st-cf:empty, .st-cd:empty, .st-ce:empty {
-#     display: none !important;
-#     height: 0 !important;
-#     min-height: 0 !important;
-#     margin: 0 !important;
-#     padding: 0 !important;
-#     border: none !important;
-#     box-shadow: none !important;
-# }
+/* Remove empty card/box below tabs */
+/* .stContainer:empty, .st-cb:empty, .st-bb:empty, .st-cg:empty, .st-cf:empty, .st-cd:empty, .st-ce:empty {
+     display: none !important;
+     height: 0 !important;
+     min-height: 0 !important;
+     margin: 0 !important;
+     padding: 0 !important;     border: none !important;
+     box-shadow: none !important;
+} */
 
 /* Section headers */
 h1, h2, h3, h4, h5, h6, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
@@ -201,6 +203,7 @@ h1, h2, h3, h4, h5, h6, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
 ''', unsafe_allow_html=True)
 
 # # Apply custom CSS to left-align the app and optimize layout
+# Apply custom CSS to left-align the app and optimize layout
 # st.markdown("""
 # <style>
 #     html, body, .block-container {
@@ -216,7 +219,6 @@ h1, h2, h3, h4, h5, h6, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
 #         padding-right: 1rem !important;
 #         padding-left: 1rem !important;
 #         padding-bottom: 0.5rem !important;
-#     }
 #     .stPlotlyChart {
 #         margin-bottom: 0 !important;
 #     }
@@ -569,15 +571,16 @@ def run_notebook(phone_number):
 
     return result_state, notebook_output
 
+## Commented out duplicate UI code
 # # Streamlit UI
 # # Remove blank spaces before the title by injecting CSS to set margin-top: 0 for .block-container and .main
-# st.markdown('''
-# <style>
-# .block-container { margin-top: 0 !important; }
-# section.main { padding-top: 0 !important; }
-# </style>
-# ''', unsafe_allow_html=True)
-# st.title("📞 Telecom Fraud Detection")
+# # st.markdown('''
+# # <style>
+# # .block-container { margin-top: 0 !important; }
+# # section.main { padding-top: 0 !important; }
+# # </style>
+# # ''', unsafe_allow_html=True)
+# # st.title("📞 Telecom Fraud Detection")
 
 # Sidebar for settings
 with st.sidebar:
@@ -762,7 +765,7 @@ with tabs[0]:
                                 # Add a "Try Again" button if there was an error
                                 if status == "error":
                                     retry_key = f"retry_blockchain_{row['Caller']}"
-                                    if cols[3].button("Try                                 # Process blockchain action if it's pending for this phone number
+                                    if cols[3].button("Try again")                                # Process blockchain action if it's pending for this phone number
                             if st.session_state.get('blockchain_action_pending') == btn_key:
                                 # Execute the blockchain API call
                                 payload = {
