@@ -718,6 +718,7 @@ with tabs[0]:
                         cols[2].markdown(f'<span style="{style}">{row["Anomaly Score"]}</span>', unsafe_allow_html=True)
                         if row['Prediction'] == 'Anomaly':
                             btn_key = f"add_blockchain_{row['Caller']}"
+                            response_key = f"blockchain_response_{row['Caller']}"
                             if cols[3].button("Add to Blockchain", key=btn_key):
                                 payload = {
                                     "requestId": "000001",
@@ -748,11 +749,18 @@ with tabs[0]:
                                         res_code = resp.status_code
                                         msg = resp.text
                                     if resp.status_code == 200 and (res_code == 200 or res_code == '200'):
-                                        cols[3].success(f"✅ Record added to blockchain. (Code: 200)")
+                                        st.session_state[response_key] = ("success", f"✅ Record added to blockchain. (Code: 200)")
                                     else:
-                                        cols[3].error(f"❌ Error adding record. (Code: {res_code}) - {msg}")
+                                        st.session_state[response_key] = ("error", f"❌ Error adding record. (Code: {res_code}) - {msg}")
                                 except Exception as e:
-                                    cols[3].error(f"❌ API call failed. Blockchain API call failed: {e}")
+                                    st.session_state[response_key] = ("error", f"❌ API call failed. Blockchain API call failed: {e}")
+                            # Show the response if present
+                            if response_key in st.session_state:
+                                status, message = st.session_state[response_key]
+                                if status == "success":
+                                    cols[3].success(message)
+                                else:
+                                    cols[3].error(message)
                         else:
                             cols[3].markdown("")
                 else:
