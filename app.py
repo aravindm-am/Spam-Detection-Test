@@ -739,11 +739,15 @@ with tabs[0]:
                                 try:
                                     resp = requests.post(api_url, json=payload, headers=headers, timeout=10)
                                     if resp.status_code == 200:
-                                        cols[3].success(f"Added {row['Caller']} to blockchain.")
+                                        cols[3].success(f"✅ API call successful. Added {row['Caller']} to blockchain.")
                                     else:
-                                        cols[3].error(f"Blockchain API error: {resp.status_code}")
+                                        try:
+                                            error_msg = resp.json().get('error', resp.text)
+                                        except Exception:
+                                            error_msg = resp.text
+                                        cols[3].error(f"❌ API call failed. Blockchain API error: {resp.status_code} - {error_msg}")
                                 except Exception as e:
-                                    cols[3].error(f"Blockchain API call failed: {e}")
+                                    cols[3].error(f"❌ API call failed. Blockchain API call failed: {e}")
                         else:
                             cols[3].markdown("")
                 else:
