@@ -698,417 +698,64 @@ with tabs[0]:
                             except:
                                 pass
                 if notebook_output and "results" in notebook_output:
-                    # --- Business-styled results table ---
-                    st.markdown("""
-                    <div class="biz-table-card">
-                      <h4 class="biz-table-title">Scoring Results</h4>
-                      <div class="biz-table">
-                        <div class="biz-table-row biz-table-header">
-                          <div>Caller</div>
-                          <div>Prediction</div>
-                          <div>Anomaly Score</div>
-                          <div>Add to blockchain</div>
-                        </div>
-                    """, unsafe_allow_html=True)
                     results_df = pd.DataFrame(notebook_output["results"])
                     results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
-                    results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "")
-                    for idx, row in results_df.iterrows():
-                        is_anomaly = row['Prediction'] == 'Anomaly'
-                        row_class = 'biz-row-anomaly' if is_anomaly else 'biz-row-normal'
-                        badge = f"<span class='biz-badge {'biz-badge-anomaly' if is_anomaly else 'biz-badge-normal'}'>{row['Prediction']}</span>"
-                        st.markdown(f"""
-                        <div class='biz-table-row {row_class}'>
-                          <div class='biz-cell-caller'>{row['Caller']}</div>
-                          <div>{badge}</div>
-                          <div>{row['Anomaly Score']}</div>
-                          <div id='add-btn-{row['Caller']}'>
-                        """, unsafe_allow_html=True)
-                        if is_anomaly:
-                            add_key = f"add_{row['Caller']}"
-                            if st.button("Add", key=add_key):
-                                API_BASE = "http://163.69.82.203:8095/tmf/v1"
-                                payload = {
-                                    "requestId": "000001",
-                                    "module": "tmforum",
-                                    "channelID": "globalspamdatachannel",
-                                    "chaincodeID": "qotcc",
-                                    "functionName": "addQoTRecord",
-                                    "payload": {
-                                        "msisdn": row['Caller'],
-                                        "src_o": "Jio",
-                                        "src_c": "India",
-                                        "rep_o": "Airtel",
-                                        "rep_c": "India",
-                                        "score": float(row['Anomaly Score'])
-                                    }
-                                }
-                                try:
-                                    response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
-                                    st.success("Added!")
-                                    st.code(response.text, language="json")
-                                except Exception as e:
-                                    st.error(f"Error: {e}")
-                        st.markdown("</div></div>", unsafe_allow_html=True)
-                    st.markdown("</div></div>", unsafe_allow_html=True)
-                    # --- Custom CSS for business table ---
-                    st.markdown('''
-                    <style>
-                    .biz-table-card {
-                      background: #fff;
-                      border-radius: 18px;
-                      box-shadow: 0 2px 16px 0 rgba(30,34,90,0.10);
-                      padding: 32px 32px 18px 32px;
-                      margin: 32px 0 32px 0;
-                      max-width: 900px;
-                      min-width: 320px;
-                    }
-                    .biz-table-title {
-                      color: #007BFF;
-                      font-size: 1.5rem;
-                      font-weight: 800;
-                      margin-bottom: 18px;
-                      letter-spacing: 0.5px;
-                    }
-                    .biz-table {
-                      width: 100%;
-                      display: flex;
-                      flex-direction: column;
-                      font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
-                      font-size: 1.08rem;
-                    }
-                    .biz-table-row {
-                      display: flex;
-                      align-items: center;
-                      border-bottom: 1px solid #e3e8f0;
-                      padding: 0.7em 0.2em;
-                      transition: background 0.15s;
-                    }
-                    .biz-table-header {
-                      background: linear-gradient(90deg, #007BFF 0%, #0056b3 100%);
-                      color: #fff;
-                      font-weight: 700;
-                      border-radius: 10px 10px 0 0;
-                      font-size: 1.12rem;
-                      padding: 1em 0.2em;
-                    }
-                    .biz-table-row > div {
-                      flex: 1;
-                      padding: 0.3em 0.7em;
-                      min-width: 0;
-                      word-break: break-all;
-                    }
-                    .biz-row-anomaly {
-                      background: #fff6f6;
-                    }
-                    .biz-row-normal {
-                      background: #f7f9fb;
-                    }
-                    .biz-table-row:hover {
-                      background: #eaf2ff;
-                    }
-                    .biz-badge {
-                      display: inline-block;
-                      padding: 0.25em 1.1em;
-                      border-radius: 16px;
-                      font-size: 1em;
-                      font-weight: 700;
-                      letter-spacing: 0.5px;
-                    }
-                    .biz-badge-anomaly {
-                      background: #FF4B4B;
-                      color: #fff;
-                      box-shadow: 0 1px 4px 0 rgba(255,75,75,0.10);
-                    }
-                    .biz-badge-normal {
-                      background: #007BFF;
-                      color: #fff;
-                      box-shadow: 0 1px 4px 0 rgba(0,123,255,0.10);
-                    }
-                    .biz-cell-caller {
-                      font-family: 'Fira Mono', 'Consolas', monospace;
-                      font-size: 1.08rem;
-                      color: #374151;
-                      font-weight: 500;
-                    }
-                    /* Style the Add button to match the app theme */
-                    div[id^='add-btn-'] button {
-                      background: linear-gradient(90deg, #007BFF 0%, #0056b3 100%) !important;
-                      color: #fff !important;
-                      border: none !important;
-                      border-radius: 8px !important;
-                      font-size: 1.05rem !important;
-                      font-weight: 600 !important;
-                      padding: 0.4em 1.5em !important;
-                      margin: 0.1em 0.2em;
-                      box-shadow: 0 2px 8px 0 rgba(0,123,255,0.08) !important;
-                      transition: background 0.2s;
-                    }
-                    div[id^='add-btn-'] button:hover {
-                      background: linear-gradient(90deg, #0056b3 0%, #007BFF 100%) !important;
-                    }
-                    @media (max-width: 900px) {
-                      .biz-table-card { padding: 12px 2vw 8px 2vw; }
-                      .biz-table-title { font-size: 1.1rem; }
-                      .biz-table-row > div { font-size: 0.98rem; padding: 0.2em 0.2em; }
-                    }
-                    </style>
-                    ''', unsafe_allow_html=True)
-                else:
-                    st.warning("No results found in notebook output.")
-                    
-    # Always show the hardcoded plots below the upload UI
-    # Check if we have a real analysis or should use the hardcoded data
-    if 'shap_data' in st.session_state and 'combined_analysis' in st.session_state.shap_data:
-        shap_data = st.session_state.shap_data
-        combined = shap_data['combined_analysis']
-        st.success("✅ Displaying analysis from the latest run")
-    else:
-        # Use hardcoded combined analysis
-        combined = HARDCODED_COMBINED_ANALYSIS
-        st.info("ℹ️ Displaying pre-computed analysis. Run an individual analysis for real-time data.")
+                    results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.6f}" if pd.notnull(x) else "")
 
-    # Main container for the combined analysis layout
-    with st.container():
-        # Calculate available height for plots
-        header_height = 60  # app title + info banner
-        padding = 32  # extra margin/padding
-        available_height = st.session_state['viewport_height'] - header_height - padding
-        # 2 rows: each row gets half the available height
-        row_height = max(200, int(available_height / 2))
-        # 3 columns for the first row
-        col_width = int(st.session_state['viewport_width'] / 3)
-    
-        # First row - 3 equal columns for the three main plots
-        row1_col1, row1_col2, row1_col3 = st.columns(3, gap="medium")
-        with row1_col1:
-            if 'global_feature_importance' in combined:
-                st.markdown("#### <span style='color:#007BFF;'>📊 Top Indicators of Fraudulent Activity</span>", unsafe_allow_html=True)
-                global_importance_df = pd.DataFrame({
-                    'Feature': list(combined['global_feature_importance'].keys()),
-                    'Importance': list(combined['global_feature_importance'].values())
-                }).sort_values('Importance', ascending=False)
-                global_importance_df = global_importance_df.head(10)
-                fig_global_importance = px.bar(
-                    global_importance_df, 
-                    x='Importance', 
-                    y='Feature', 
-                    orientation='h',
-                    color='Importance',
-                    color_continuous_scale='Viridis'
-                )
-                fig_global_importance.update_layout(
-                    height=row_height,
-                    margin=dict(l=5, r=5, t=5, b=5),
-                    title=""  # Set empty string to avoid 'undefined' label
-                )
-                st.plotly_chart(fig_global_importance, use_container_width=True)
-            else:
-                st.warning("Global feature importance data not available.")
-    
-        with row1_col2:
-            if 'prediction_distribution' in combined:
-                st.markdown("#### <span style='color:#007BFF;'>🔄 Fraud vs. Normal Call Distribution</span>", unsafe_allow_html=True)
-                labels = list(combined['prediction_distribution'].keys())
-                values = list(combined['prediction_distribution'].values())
-                fig_pie = px.pie(
-                    names=labels,
-                    values=values,
-                    color=labels,
-                    color_discrete_map={'Normal': '#007BFF', 'Anomaly': '#FF4B4B'},
-                    hole=0.4
-                )
-                fig_pie.update_layout(
-                    height=row_height,
-                    margin=dict(l=5, r=5, t=5, b=5),
-                    legend=dict(orientation="h", yanchor="bottom", y=-0.2),
-                    title=""  # Set empty string to avoid 'undefined' label
-                )
-                st.plotly_chart(fig_pie, use_container_width=True)
-            else:
-                st.warning("Prediction distribution data not available.")
-    
-        with row1_col3:
-            if 'correlation_matrix' in combined:
-                st.markdown("#### <span style='color:#007BFF;'>🔄 Correlated Call Patterns in Risk Profiles</span>", unsafe_allow_html=True)
-                important_features = ["short_call_ratio", "mean_duration", "pct_daytime", "pct_weekend"]
-                filtered_corr = {k: {k2: v2 for k2, v2 in v.items() if k2 in important_features} 
-                                for k, v in combined['correlation_matrix'].items() 
-                                if k in important_features}
-                corr_df = pd.DataFrame.from_dict(filtered_corr)
-                fig_corr = px.imshow(
-                    corr_df,
-                    color_continuous_scale='RdBu_r',
-                    zmin=-1, 
-                    zmax=1,
-                    text_auto='.2f'
-                )
-                fig_corr.update_layout(
-                    height=row_height,
-                    margin=dict(l=5, r=5, t=5, b=5),
-                    title=""  # Set empty string to avoid 'undefined' label
-                )
-                fig_corr.update_traces(texttemplate="%{text}", textfont={"size": 10})
-                st.plotly_chart(fig_corr, use_container_width=True)
-            else:
-                st.warning("Correlation matrix data not available.")  
-        row2_col1, row2_col2 = st.columns(2)
-        with row2_col1:
-            if 'feature_distributions' in combined:
-                st.markdown("#### <span style='color:#007BFF;'>📈 Spotting Risk Through Call Behavior</span>", unsafe_allow_html=True)
-                feature_options = list(combined['feature_distributions'].keys())
-                select_feature = st.selectbox(
-                    "Select feature:", 
-                    options=feature_options,
-                    key="compact_feature_selector"
-                )
-                if select_feature:
-                    feature_dist = combined['feature_distributions'][select_feature]
-                    normal_values = feature_dist['normal']
-                    anomaly_values = feature_dist['anomaly']
-                    stats_to_show = ['mean', '25%', '50%', '75%']
-                    fig_dist = go.Figure()
-                    fig_dist.add_trace(go.Bar(
-                        x=[normal_values[s] for s in stats_to_show],
-                        y=stats_to_show,
-                        orientation='h',
-                        name="Normal",
-                        marker_color='#007BFF'
-                    ))
-                    fig_dist.add_trace(go.Bar(
-                        x=[anomaly_values[s] for s in stats_to_show],
-                        y=stats_to_show,
-                        orientation='h',
-                        name="Anomaly",
-                        marker_color='#FF4B4B'
-                    ))
-                    fig_dist.update_layout(
-                        title="",  # Set empty string to avoid 'undefined' label
-                        xaxis_title="Value",
-                        barmode='group',
-                        height=row_height,
-                        margin=dict(l=5, r=5, t=20, b=20),
-                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-                    )
-                    st.plotly_chart(fig_dist, use_container_width=True)
-            else:
-                st.warning("Feature distribution data not available.")
-        with row2_col2:
-            if 'anomaly_score_distribution' in combined:
-                st.markdown("#### <span style='color:#007BFF;'>🔔 Likelihood of Fraud Across Users</span>", unsafe_allow_html=True)
-                hist_data = combined['anomaly_score_distribution']['histogram_data']
-                bins = hist_data['bins']
-                bin_indices = range(0, len(bins)-1, 2)
-                bin_centers = [(bins[i] + bins[i+1])/2 for i in bin_indices if i+1 < len(bins)]
-                bin_labels = [f"{bins[i]:.1f}-{bins[i+1]:.1f}" for i in bin_indices if i+1 < len(bins)]
-                normal_counts = []
-                anomaly_counts = []
-                for i in bin_indices:
-                    if i+1 < len(bins):
-                        if i < len(hist_data['normal_counts']):
-                            normal_counts.append(hist_data['normal_counts'][i])
-                        else:
-                            normal_counts.append(0)
-                        if i < len(hist_data['anomaly_counts']):
-                            anomaly_counts.append(hist_data['anomaly_counts'][i])
-                        else:
-                            anomaly_counts.append(0)
-                fig_hist = go.Figure()
-                fig_hist.add_trace(go.Bar(
-                    x=bin_centers,
-                    y=normal_counts,
-                    name='Normal',
-                    marker_color='#007BFF',
-                    text=bin_labels
-                ))
-                fig_hist.add_trace(go.Bar(
-                    x=bin_centers,
-                    y=anomaly_counts,
-                    name='Anomaly',
-                    marker_color='#FF4B4B',
-                    text=bin_labels
-                ))
-                fig_hist.update_layout(
-                    title="",  # Set empty string to avoid 'undefined' label
-                    xaxis_title="Anomaly Score",
-                    yaxis_title="Count",
-                    barmode='group',
-                    height=row_height,
-                    margin=dict(l=5, r=5, t=20, b=20),
-                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-                )
-                st.plotly_chart(fig_hist, use_container_width=True)
-            else:
-                st.warning("Anomaly score distribution data not available.")
+                    def highlight_anomaly(row):
+                        return ['color: red; font-weight: bold' if row['Prediction'] == 'Anomaly' else '' for _ in row]
+
+                    st.markdown("""
+                    <span style='font-size:2rem;font-weight:800;color:#007BFF;'>📋 Scoring Results</span>
+                    """, unsafe_allow_html=True)
+                    styled_df = results_df.style.apply(highlight_anomaly, axis=1)
+                    styled_df = styled_df.set_properties(**{'font-weight': 'bold'})
+                    styled_df = styled_df.set_table_styles([
+                        {'selector': 'th', 'props': [('background-color', '#e3eefa'), ('color', '#1a237e'), ('font-weight', 'bold'), ('font-size', '1.1em')]}
+                    ])
+                    st.dataframe(styled_df, use_container_width=True, hide_index=False)
 
 # Tab 2: Individual Analysis (now second)
 with tabs[1]:
-    st.markdown("#### <span style='color:#007BFF;'>Check a Phone Number for Fraud</span>", unsafe_allow_html=True)
-    phone_number = st.text_input("Enter Phone Number to Check")
-    run_button = st.button("Run Fraud Check", key="run_check_button")
+    st.subheader("🔍 Check individual phone number")
+    phone_number = st.text_input("Enter phone number:", value="", max_chars=16)
     
-    if run_button:
-        if phone_number.strip():
-            with st.spinner("Subex Spam Scoring Started..."):
-                result, notebook_output = run_notebook(phone_number.strip())
-                if result == "SUCCESS":
-                    st.success("🎉 Analysis complete!")
-                    shap_data = notebook_output
-                    st.session_state.shap_data = shap_data
-
-                    st.subheader("📞 Prediction Summary")
-                    st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>Phone Number</b>: <code>{phone_number}</code></span>", unsafe_allow_html=True)
-                    st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>Prediction</b>: <code>{shap_data['prediction']}</code></span>", unsafe_allow_html=True)
-                    st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>Anomaly Score</b>: <code>{shap_data['anomaly_score']:.4f}</code></span>", unsafe_allow_html=True)
-                    if 'explanation' in shap_data and shap_data['explanation']:
-                        st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>AI Explanation</b>: {shap_data['explanation']}</span>", unsafe_allow_html=True)
-
-                    feature_importance_df = pd.DataFrame({
-                        'Feature': list(shap_data['feature_importance'].keys()),
-                        'Importance': list(shap_data['feature_importance'].values())
-                    }).sort_values('Importance', ascending=False)
-
-                    # Prepare data for waterfall plot
-                    waterfall_data = shap_data['feature_contributions']
-                    features = list(waterfall_data.keys())
-                    shap_values = [waterfall_data[f]['shap_value'] for f in features]
-
-                    tab1, tab2 = st.tabs(["📊 Feature Importance", "🔍 Waterfall"])
-
-                    with tab1:
-                        st.markdown("### 📊 Individual Feature Importance")
-                        fig_importance = px.bar(
-                                feature_importance_df, 
-                                x='Importance', 
-                                y='Feature', 
-                                orientation='h',
-                                color='Importance',
-                                color_continuous_scale='Blues'
-                            )
-                        fig_importance.update_layout(title="Individual Feature Importance")
-                        st.plotly_chart(fig_importance, use_container_width=True)
-                                              
-
-                    with tab2:
-                        fig_waterfall = go.Figure(go.Waterfall(
-                            name="SHAP Values", 
-                            orientation="h",
-                            y=features,
-                            x=shap_values,
-                            connector={"line":{"color":"rgb(63, 63, 63)"}},
-                            decreasing={"marker":{"color":"#FF4B4B"}},
-                            increasing={"marker":{"color":"#007BFF"}},
-                            base=shap_data['base_value']
-                        ))
-                        fig_waterfall.update_layout(
-                            title="SHAP Waterfall Plot",
-                            xaxis_title="SHAP Value",
-                            yaxis_title="Feature",
-                            showlegend=False
-                        )
-                        st.plotly_chart(fig_waterfall, use_container_width=True)
-
-                else:
-                    st.error(f"❌ Job failed: {result}")
+    if st.button("Run Analysis", key="run_analysis_button"):
+        if not phone_number:
+            st.error("❌ Please enter a phone number.")
         else:
-            st.warning("📱 Please enter a valid phone number.")
+            with st.spinner(f"Running analysis for {phone_number}..."):
+                result_state, notebook_output = run_notebook(phone_number)
+            
+            if result_state == "SUCCESS" and notebook_output:
+                st.success("✅ Analysis complete.")
+                
+                # --- Display results: prediction, feature importance, and distributions ---
+                # 1. Prediction result
+                st.subheader("📈 Prediction Result")
+                st.write(f"**Phone Number:** {notebook_output.get('phone_number', 'N/A')}")
+                st.write(f"**Prediction:** {notebook_output.get('prediction', 'N/A')}")
+                st.write(f"**Anomaly Score:** {notebook_output.get('anomaly_score', 'N/A'):.6f}")
+                
+                # 2. Feature importance
+                st.subheader("⚙️ Feature Importance")
+                if "feature_importance" in notebook_output:
+                    fi_df = pd.DataFrame(notebook_output["feature_importance"])
+                    fi_df = fi_df.sort_values(by="importance", ascending=False)
+                    fig = px.bar(fi_df, x="importance", y="feature", orientation="h",
+                                title="Feature Importance",
+                                labels={"importance": "Importance Score", "feature": "Feature"},
+                                height=400)
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.warning("No feature importance data available.")
+                
+                # 3. Feature distributions (compared to normal and anomaly distributions)
+                st.subheader("📊 Feature Distributions")
+                if "feature_distributions" in notebook_output:
+                    fd = notebook_output["feature_distributions"]
+                    for feature, data in fd.items():
+                        if isinstance(data, dict) and "normal" in data and "anomaly" in data:
+                            normal_dist = data["normal"]
+                            anomaly_dist = data["anomaly"]
+                            
