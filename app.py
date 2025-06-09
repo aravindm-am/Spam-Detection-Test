@@ -643,48 +643,8 @@ except Exception:
 
 # Tab 1: Combined Analysis (now first)
 with tabs[0]:
-    # --- Batch scoring UI ---
-    st.markdown("#### <span style='color:#007BFF;'>Upload a file for scoring</span>", unsafe_allow_html=True)
-    uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"], key="batch_upload")
-    if uploaded_file is not None:
-        # --- Upload to Databricks DBFS ---
-        import base64
-        file_name = uploaded_file.name
-        file_bytes = uploaded_file.read()
-        encoded_content = base64.b64encode(file_bytes).decode("utf-8")
-        dbfs_file_path = f"dbfs:/tmp/{file_name}"
-        st.info(f"Uploading to DBFS: {dbfs_file_path} ...")
-        upload_response = requests.post(
-            f"{DATABRICKS_HOST}/api/2.0/dbfs/put",
-            headers={"Authorization": f"Bearer {DATABRICKS_TOKEN}"},
-            json={
-                "path": dbfs_file_path,
-                "overwrite": True,
-                "contents": encoded_content
-            }
-        )
-        # # --- Debugging output ---
-        # st.write("DBFS Upload Response Status:", upload_response.status_code)
-        # try:
-        #     st.write("DBFS Upload Response JSON:", upload_response.json())
-        # except Exception:
-        #     st.write("DBFS Upload Response Text:", upload_response.text)
-        # if upload_response.status_code == 200:
-        #     st.success(f"✅ File uploaded successfully to {dbfs_file_path}")
-        # else:
-        #     st.error(f"❌ Upload to DBFS failed: {upload_response.status_code}")
-        #     try:
-        #         st.json(upload_response.json())
-        #     except Exception:
-        #         st.write(upload_response.text)
-        # # Reset file pointer for pandas
-        uploaded_file.seek(0)
-        df_uploaded = pd.read_csv(uploaded_file)
-        st.success("✅ File uploaded! Click 'Score' to analyze.")
-        #Display uploaded file in a Streamlit dataframe (no tabulate dependency)
-        st.markdown('#### 📄 File Preview')
-        st.dataframe(df_uploaded.head(20), use_container_width=True)
-        if st.button("Score", key="score_batch_button"):
+    # --- Batch screening UI ---
+    if st.button("Start Screening", key="start_screening_button"):
             # Just run the Databricks notebook (databricks-new.py) and display the JSON output
             headers = {
                 "Authorization": f"Bearer {DATABRICKS_TOKEN}",
@@ -736,23 +696,30 @@ with tabs[0]:
                             try:
                                 notebook_output = json.loads(notebook_output)
                             except:
-                                pass
-                if notebook_output and "results" in notebook_output:
+                                pass                if notebook_output and "results" in notebook_output:
                   # Display results table with caller, prediction, and anomaly_score
-                    st.markdown("#### <span style='color:#007BFF;'>📋 Scoring Results</span>", unsafe_allow_html=True)
+                    st.markdown("#### <span style='color:#007BFF;'>Scoring Results</span>", unsafe_allow_html=True)
                     results_df = pd.DataFrame(notebook_output["results"])
-                    # Rename columns for display
+                    # Rename columns for display to match Image 2
                     results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
+                    
+                    # Format anomaly scores to match the display in Image 2
+                    results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.6f}" if pd.notnull(x) else "")
+                    
+                    # Apply color formatting for anomalies in red
                     def highlight_anomaly(row):
                         if row['Prediction'] == 'Anomaly':
-                            return ['color: red; font-weight: normal;', 'color: red; font-weight: normal;', 'color: red; font-weight: normal;']
+                            return ['color: red;', 'color: red;', 'color: red;']
                         else:
                             return ['', '', '']
+                    
                     styled_df = results_df.style.apply(highlight_anomaly, axis=1)
                     styled_df = styled_df.set_properties(**{'font-size': '1.1em'})
                     styled_df = styled_df.set_table_styles([
                         dict(selector='th', props=[('color', '#1a237e'), ('font-weight', 'bold'), ('font-size', '1.1em')])
                     ])
+                    
+                    # Display the results table
                     st.write(styled_df.to_html(escape=False), unsafe_allow_html=True)
                 else:
                     st.warning("No results found in notebook output.")
