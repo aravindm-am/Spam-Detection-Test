@@ -698,28 +698,35 @@ with tabs[0]:
                             except:
                                 pass
                 if notebook_output and "results" in notebook_output:
-                  # Display results table with caller, prediction, and anomaly_score
-                    st.markdown("#### <span style='color:#007BFF;'>Scoring Results</span>", unsafe_allow_html=True)
+                    # --- Business-styled results table ---
+                    st.markdown("""
+                    <div class="biz-table-card">
+                      <h4 class="biz-table-title">Scoring Results</h4>
+                      <div class="biz-table">
+                        <div class="biz-table-row biz-table-header">
+                          <div>Caller</div>
+                          <div>Prediction</div>
+                          <div>Anomaly Score</div>
+                          <div>Add to blockchain</div>
+                        </div>
+                    """, unsafe_allow_html=True)
                     results_df = pd.DataFrame(notebook_output["results"])
                     results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
                     results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "")
-                    # Table header
-                    header_cols = st.columns([2, 2, 2, 2])
-                    header_cols[0].markdown("<b>Caller</b>", unsafe_allow_html=True)
-                    header_cols[1].markdown("<b>Prediction</b>", unsafe_allow_html=True)
-                    header_cols[2].markdown("<b>Anomaly Score</b>", unsafe_allow_html=True)
-                    header_cols[3].markdown("<b>Add to blockchain</b>", unsafe_allow_html=True)
-                    # Render each row
                     for idx, row in results_df.iterrows():
-                        cols = st.columns([2, 2, 2, 2])
-                        color = 'red' if row['Prediction'] == 'Anomaly' else '#1a237e'
-                        cols[0].markdown(f"<span style='color:{color};'>{row['Caller']}</span>", unsafe_allow_html=True)
-                        cols[1].markdown(f"<span style='color:{color};'>{row['Prediction']}</span>", unsafe_allow_html=True)
-                        cols[2].markdown(f"<span style='color:{color};'>{row['Anomaly Score']}</span>", unsafe_allow_html=True)
-                        if row['Prediction'] == 'Anomaly':
+                        is_anomaly = row['Prediction'] == 'Anomaly'
+                        row_class = 'biz-row-anomaly' if is_anomaly else 'biz-row-normal'
+                        badge = f"<span class='biz-badge {'biz-badge-anomaly' if is_anomaly else 'biz-badge-normal'}'>{row['Prediction']}</span>"
+                        st.markdown(f"""
+                        <div class='biz-table-row {row_class}'>
+                          <div class='biz-cell-caller'>{row['Caller']}</div>
+                          <div>{badge}</div>
+                          <div>{row['Anomaly Score']}</div>
+                          <div id='add-btn-{row['Caller']}'>
+                        """, unsafe_allow_html=True)
+                        if is_anomaly:
                             add_key = f"add_{row['Caller']}"
-                            if cols[3].button("Add", key=add_key):
-                                # API call logic
+                            if st.button("Add", key=add_key):
                                 API_BASE = "http://163.69.82.203:8095/tmf/v1"
                                 payload = {
                                     "requestId": "000001",
@@ -738,13 +745,115 @@ with tabs[0]:
                                 }
                                 try:
                                     response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
-                                    cols[3].success("Added!")
-                                    cols[3].code(response.text, language="json")
+                                    st.success("Added!")
+                                    st.code(response.text, language="json")
                                 except Exception as e:
-                                    cols[3].error(f"Error: {e}")
-                        else:
-                            cols[3].markdown("")
-
+                                    st.error(f"Error: {e}")
+                        st.markdown("</div></div>", unsafe_allow_html=True)
+                    st.markdown("</div></div>", unsafe_allow_html=True)
+                    # --- Custom CSS for business table ---
+                    st.markdown('''
+                    <style>
+                    .biz-table-card {
+                      background: #fff;
+                      border-radius: 18px;
+                      box-shadow: 0 2px 16px 0 rgba(30,34,90,0.10);
+                      padding: 32px 32px 18px 32px;
+                      margin: 32px 0 32px 0;
+                      max-width: 900px;
+                      min-width: 320px;
+                    }
+                    .biz-table-title {
+                      color: #007BFF;
+                      font-size: 1.5rem;
+                      font-weight: 800;
+                      margin-bottom: 18px;
+                      letter-spacing: 0.5px;
+                    }
+                    .biz-table {
+                      width: 100%;
+                      display: flex;
+                      flex-direction: column;
+                      font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+                      font-size: 1.08rem;
+                    }
+                    .biz-table-row {
+                      display: flex;
+                      align-items: center;
+                      border-bottom: 1px solid #e3e8f0;
+                      padding: 0.7em 0.2em;
+                      transition: background 0.15s;
+                    }
+                    .biz-table-header {
+                      background: linear-gradient(90deg, #007BFF 0%, #0056b3 100%);
+                      color: #fff;
+                      font-weight: 700;
+                      border-radius: 10px 10px 0 0;
+                      font-size: 1.12rem;
+                      padding: 1em 0.2em;
+                    }
+                    .biz-table-row > div {
+                      flex: 1;
+                      padding: 0.3em 0.7em;
+                      min-width: 0;
+                      word-break: break-all;
+                    }
+                    .biz-row-anomaly {
+                      background: #fff6f6;
+                    }
+                    .biz-row-normal {
+                      background: #f7f9fb;
+                    }
+                    .biz-table-row:hover {
+                      background: #eaf2ff;
+                    }
+                    .biz-badge {
+                      display: inline-block;
+                      padding: 0.25em 1.1em;
+                      border-radius: 16px;
+                      font-size: 1em;
+                      font-weight: 700;
+                      letter-spacing: 0.5px;
+                    }
+                    .biz-badge-anomaly {
+                      background: #FF4B4B;
+                      color: #fff;
+                      box-shadow: 0 1px 4px 0 rgba(255,75,75,0.10);
+                    }
+                    .biz-badge-normal {
+                      background: #007BFF;
+                      color: #fff;
+                      box-shadow: 0 1px 4px 0 rgba(0,123,255,0.10);
+                    }
+                    .biz-cell-caller {
+                      font-family: 'Fira Mono', 'Consolas', monospace;
+                      font-size: 1.08rem;
+                      color: #374151;
+                      font-weight: 500;
+                    }
+                    /* Style the Add button to match the app theme */
+                    div[id^='add-btn-'] button {
+                      background: linear-gradient(90deg, #007BFF 0%, #0056b3 100%) !important;
+                      color: #fff !important;
+                      border: none !important;
+                      border-radius: 8px !important;
+                      font-size: 1.05rem !important;
+                      font-weight: 600 !important;
+                      padding: 0.4em 1.5em !important;
+                      margin: 0.1em 0.2em;
+                      box-shadow: 0 2px 8px 0 rgba(0,123,255,0.08) !important;
+                      transition: background 0.2s;
+                    }
+                    div[id^='add-btn-'] button:hover {
+                      background: linear-gradient(90deg, #0056b3 0%, #007BFF 100%) !important;
+                    }
+                    @media (max-width: 900px) {
+                      .biz-table-card { padding: 12px 2vw 8px 2vw; }
+                      .biz-table-title { font-size: 1.1rem; }
+                      .biz-table-row > div { font-size: 0.98rem; padding: 0.2em 0.2em; }
+                    }
+                    </style>
+                    ''', unsafe_allow_html=True)
                 else:
                     st.warning("No results found in notebook output.")
                     
