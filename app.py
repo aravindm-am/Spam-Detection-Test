@@ -466,7 +466,7 @@ HARDCODED_COMBINED_ANALYSIS = {
             7,
             5,
             12,
-            10
+            4
         ]
     }
 }
