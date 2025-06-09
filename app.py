@@ -713,7 +713,7 @@ with tabs[0]:
                                       
 
                     # Display table with Add button for each anomaly
-                    def render_row(row):
+                    def render_row(row, idx):
                         cols = st.columns([2, 2, 2, 2])
                         cols[0].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Caller']}</span>", unsafe_allow_html=True)
                         cols[1].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Prediction']}</span>", unsafe_allow_html=True)
@@ -738,8 +738,11 @@ with tabs[0]:
                                     }
                                 }
                                 try:
-                                    response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
-                                    
+                                    response = requests.post(
+                                        f"{API_BASE}/invoke/",
+                                        headers={"Content-Type": "application/json"},
+                                        data=json.dumps(payload)
+                                    )
                                     cols[3].success("Added!")
                                     cols[3].code(response.text, language="json")
                                 except Exception as e:
@@ -756,7 +759,7 @@ with tabs[0]:
 
                     # Render each row
                     for idx, row in results_df.iterrows():
-                        render_row(row)
+                        render_row(row, idx)
                 else:
                     st.warning("No results found in notebook output.")
                     
