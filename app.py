@@ -794,11 +794,11 @@ with tabs[0]:
         available_height = st.session_state['viewport_height'] - header_height - padding
         # 2 rows: each row gets half the available height
         row_height = max(200, int(available_height / 2))
-        # 3 columns for the first row
-        col_width = int(st.session_state['viewport_width'] / 3)
+        # 4 columns for the first row
+        col_width = int(st.session_state['viewport_width'] / 4)
     
-        # First row - 3 equal columns for the three main plots
-        row1_col1, row1_col2, row1_col3 = st.columns(3, gap="medium")
+        # First row - 4 equal columns for the plots
+        row1_col1, row1_col2, row1_col3, row1_col4 = st.columns(4, gap="medium")
         
         # Column 1: Top Indicators of Fraudulent Activity
         with row1_col1:
@@ -877,6 +877,30 @@ with tabs[0]:
                 st.plotly_chart(fig_prefix, use_container_width=True)
             else:
                 st.warning("Spam prefix data not available.")
+        with row1_col4:
+            if 'correlation_matrix' in combined:
+                st.markdown("#### <span style='color:#007BFF;'>🔄 Correlated Call Patterns</span>", unsafe_allow_html=True)
+                important_features = ["short_call_ratio", "mean_duration", "pct_daytime", "pct_weekend"]
+                filtered_corr = {k: {k2: v2 for k2, v2 in v.items() if k2 in important_features} 
+                                for k, v in combined['correlation_matrix'].items() 
+                                if k in important_features}
+                corr_df = pd.DataFrame.from_dict(filtered_corr)
+                fig_corr = px.imshow(
+                    corr_df,
+                    color_continuous_scale='RdBu_r',
+                    zmin=-1, 
+                    zmax=1,
+                    text_auto='.2f'
+                )
+                fig_corr.update_layout(
+                    height=row_height,
+                    margin=dict(l=5, r=5, t=5, b=5),
+                    title=""  # Set empty string to avoid 'undefined' label
+                )
+                fig_corr.update_traces(texttemplate="%{text}", textfont={"size": 10})
+                st.plotly_chart(fig_corr, use_container_width=True)
+            else:
+                st.warning("Correlation matrix data not available.")
         row2_col1, row2_col2 = st.columns(2)
         with row2_col1:
             if 'feature_distributions' in combined:
