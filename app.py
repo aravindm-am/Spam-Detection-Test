@@ -644,9 +644,7 @@ except Exception:
 # Tab 1: Combined Analysis (now first)
 with tabs[0]:
     # --- Batch screening UI ---
-    st.markdown("#### <span style='color:#007BFF;'>Batch Screening</span>", unsafe_allow_html=True)
-    st.info("The input file is preloaded and hardcoded in the backend. Click 'Start Screening' to run the ML model on the data.")
-    
+    # Removed title as requested
     if st.button("Start Screening", key="start_screening_button"):
         with st.spinner("Running batch screening on Databricks..."):
             try:
