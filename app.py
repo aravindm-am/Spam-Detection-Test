@@ -718,69 +718,58 @@ with tabs[0]:
                         cols[0].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Caller']}</span>", unsafe_allow_html=True)
                         cols[1].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Prediction']}</span>", unsafe_allow_html=True)
                         cols[2].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Anomaly Score']}</span>", unsafe_allow_html=True)
+                        add_key = f"add_{idx}_{row['Caller']}"
+                        result_key = f"add_result_{idx}_{row['Caller']}"
+                        button_clicked = False
                         if row['Prediction'] == 'Anomaly':
-                            add_key = f"add_{idx}_{row['Caller']}"
-                            if add_key not in st.session_state:
-                                st.session_state[add_key] = None
                             if cols[3].button("Add", key=add_key):
                                 msisdn = str(row['Caller']).strip()
                                 try:
                                     score = float(row['Anomaly Score'])
                                 except Exception:
-                                    st.session_state[add_key] = (False, "Invalid score value.")
-                                    st.experimental_rerun()
-                                if msisdn and (score is not None):
-                                    payload = {
-                                        "requestId": "000001",
-                                        "module": "tmforum",
-                                        "channelID": "globalspamdatachannel",
-                                        "chaincodeID": "qotcc",
-                                        "functionName": "addQoTRecord",
-                                        "payload": {
-                                            "msisdn": msisdn,
-                                            "src_o": "Jio",
-                                            "src_c": "India",
-                                            "rep_o": "Airtel",
-                                            "rep_c": "India",
-                                            "score": score
+                                    st.session_state[result_key] = (False, "Invalid score value.")
+                                    button_clicked = True
+                                else:
+                                    if msisdn and (score is not None):
+                                        payload = {
+                                            "requestId": "000001",
+                                            "module": "tmforum",
+                                            "channelID": "globalspamdatachannel",
+                                            "chaincodeID": "qotcc",
+                                            "functionName": "addQoTRecord",
+                                            "payload": {
+                                                "msisdn": msisdn,
+                                                "src_o": "Jio",
+                                                "src_c": "India",
+                                                "rep_o": "Airtel",
+                                                "rep_c": "India",
+                                                "score": score
+                                            }
                                         }
-                                    }
-                                    try:
-                                        response = requests.post(
-                                            f"{API_BASE}/invoke/",
-                                            headers={"Content-Type": "application/json"},
-                                            data=json.dumps(payload)
-                                        )
-                                        if response.status_code == 200 and ("SUCCESS" in response.text or 'success' in response.text.lower()):
-                                            st.session_state[add_key] = (True, "Added to blockchain!")
-                                        else:
-                                            st.session_state[add_key] = (False, f"Error: {response.text}")
-                                    except Exception as e:
-                                        st.session_state[add_key] = (False, f"Error: {e}")
-                                    st.experimental_rerun()
-                                else:
-                                    st.session_state[add_key] = (False, "Missing msisdn or score.")
-                                    st.experimental_rerun()
-                            # Show result message if present
-                            if st.session_state[add_key] is not None:
-                                success, msg = st.session_state[add_key]
-                                if success:
-                                    cols[3].success(msg)
-                                else:
-                                    cols[3].error(msg)
-                        else:
-                            cols[3].markdown("")
-
-                    # Table header
-                    header_cols = st.columns([2, 2, 2, 2])
-                    header_cols[0].markdown("<b>Caller</b>", unsafe_allow_html=True)
-                    header_cols[1].markdown("<b>Prediction</b>", unsafe_allow_html=True)
-                    header_cols[2].markdown("<b>Anomaly Score</b>", unsafe_allow_html=True)
-                    header_cols[3].markdown("<b>Add to blockchain</b>", unsafe_allow_html=True)
-
-                    # Render each row
-                    for idx, row in results_df.iterrows():
-                        render_row(row, idx)
+                                        try:
+                                            response = requests.post(
+                                                f"{API_BASE}/invoke/",
+                                                headers={"Content-Type": "application/json"},
+                                                data=json.dumps(payload)
+                                            )
+                                            if response.status_code == 200 and ("SUCCESS" in response.text or 'success' in response.text.lower()):
+                                                st.session_state[result_key] = (True, "Added to blockchain!")
+                                            else:
+                                                st.session_state[result_key] = (False, f"Error: {response.text}")
+                                        except Exception as e:
+                                            st.session_state[result_key] = (False, f"Error: {e}")
+                                        button_clicked = True
+                                    else:
+                                        st.session_state[result_key] = (False, "Missing msisdn or score.")
+                                        button_clicked = True
+                        # Show result message if present
+                        if result_key in st.session_state:
+                            success, msg = st.session_state[result_key]
+                            if success:
+                                cols[3].success(msg)
+                            else:
+                                cols[3].error(msg)
+# ...existing code...
                 else:
                     st.warning("No results found in notebook output.")
                     
