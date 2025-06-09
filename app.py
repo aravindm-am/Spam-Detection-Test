@@ -692,7 +692,8 @@ with tabs[0]:
                     if output_response.status_code == 200:
                         notebook_result = output_response.json().get("notebook_output", {})
                         notebook_output = notebook_result.get("result", None)
-                        if isinstance(notebook_output, str):                            try:
+                        if isinstance(notebook_output, str):
+                          try:
                                 notebook_output = json.loads(notebook_output)
                             except:
                                 pass
