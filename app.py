@@ -701,18 +701,18 @@ with tabs[0]:
                   # Display results table with caller, prediction, and anomaly_score
                     st.markdown("#### <span style='color:#007BFF;'>Scoring Results</span>", unsafe_allow_html=True)
                     results_df = pd.DataFrame(notebook_output["results"])
-                    # Rename columns for display to match Image 2
+                    # Rename columns for display to match Image 2 and add blockchain column
                     results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
-                    
-                    # Format anomaly scores to match the display in Image 2
-                    results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.6f}" if pd.notnull(x) else "")
-                    
+                    # Format anomaly scores to two decimal places as string
+                    results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "")
+                    # Add 'Add to blockchain' column (empty or with a button placeholder)
+                    results_df['Add to blockchain'] = ''
                     # Apply color formatting for anomalies in red
                     def highlight_anomaly(row):
                         if row['Prediction'] == 'Anomaly':
-                            return ['color: red;', 'color: red;', 'color: red;']
+                            return ['color: red;', 'color: red;', 'color: red;', '']
                         else:
-                            return ['', '', '']
+                            return ['', '', '', '']
                     
                     styled_df = results_df.style.apply(highlight_anomaly, axis=1)
                     styled_df = styled_df.set_properties(**{'font-size': '1.1em'})
