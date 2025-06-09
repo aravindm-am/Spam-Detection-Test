@@ -959,6 +959,79 @@ with tabs[0]:
                 st.plotly_chart(fig_hist, use_container_width=True)
             else:
                 st.warning("Anomaly score distribution data not available.")
+###
+# Tab 2: Individual Analysis (now second)
+with tabs[1]:
+    st.markdown("#### <span style='color:#007BFF;'>Check a Phone Number for Fraud</span>", unsafe_allow_html=True)
+    phone_number = st.text_input("Enter Phone Number to Check")
+    run_button = st.button("Run Fraud Check", key="run_check_button")
+    
+    if run_button:
+        if phone_number.strip():
+            with st.spinner("Subex Spam Scoring Started..."):
+                result, notebook_output = run_notebook(phone_number.strip())
+                if result == "SUCCESS":
+                    st.success("🎉 Analysis complete!")
+                    shap_data = notebook_output
+                    st.session_state.shap_data = shap_data
+
+                    st.subheader("📞 Prediction Summary")
+                    st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>Phone Number</b>: <code>{phone_number}</code></span>", unsafe_allow_html=True)
+                    st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>Prediction</b>: <code>{shap_data['prediction']}</code></span>", unsafe_allow_html=True)
+                    st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>Anomaly Score</b>: <code>{shap_data['anomaly_score']:.4f}</code></span>", unsafe_allow_html=True)
+                    if 'explanation' in shap_data and shap_data['explanation']:
+                        st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>AI Explanation</b>: {shap_data['explanation']}</span>", unsafe_allow_html=True)
+
+                    feature_importance_df = pd.DataFrame({
+                        'Feature': list(shap_data['feature_importance'].keys()),
+                        'Importance': list(shap_data['feature_importance'].values())
+                    }).sort_values('Importance', ascending=False)
+
+                    # Prepare data for waterfall plot
+                    waterfall_data = shap_data['feature_contributions']
+                    features = list(waterfall_data.keys())
+                    shap_values = [waterfall_data[f]['shap_value'] for f in features]
+
+                    tab1, tab2 = st.tabs(["📊 Feature Importance", "🔍 Waterfall"])
+
+                    with tab1:
+                        st.markdown("### 📊 Individual Feature Importance")
+                        fig_importance = px.bar(
+                                feature_importance_df, 
+                                x='Importance', 
+                                y='Feature', 
+                                orientation='h',
+                                color='Importance',
+                                color_continuous_scale='Blues'
+                            )
+                        fig_importance.update_layout(title="Individual Feature Importance")
+                        st.plotly_chart(fig_importance, use_container_width=True)
+                                              
+
+                    with tab2:
+                        fig_waterfall = go.Figure(go.Waterfall(
+                            name="SHAP Values", 
+                            orientation="h",
+                            y=features,
+                            x=shap_values,
+                            connector={"line":{"color":"rgb(63, 63, 63)"}},
+                            decreasing={"marker":{"color":"#FF4B4B"}},
+                            increasing={"marker":{"color":"#007BFF"}},
+                            base=shap_data['base_value']
+                        ))
+                        fig_waterfall.update_layout(
+                            title="SHAP Waterfall Plot",
+                            xaxis_title="SHAP Value",
+                            yaxis_title="Feature",
+                            showlegend=False
+                        )
+                        st.plotly_chart(fig_waterfall, use_container_width=True)
+
+                else:
+                    st.error(f"❌ Job failed: {result}")
+        else:
+            st.warning("📱 Please enter a valid phone number.")      
+      
         # --- New plot: Spam Prefix Bar Plot ---
         if 'spam_prefix_bar_plot' in combined:
             st.markdown("#### <span style='color:#007BFF;'>📞 Spam Call Frequency by Number Prefix</span>", unsafe_allow_html=True)
@@ -966,13 +1039,33 @@ with tabs[0]:
             fig_prefix = go.Figure(go.Bar(
                 x=prefix_data['prefixes'],
                 y=prefix_data['counts'],
-                marker_color='orange'
+                marker_color='orange',
+                marker_line_width=0
             ))
             fig_prefix.update_layout(
                 xaxis_title="Number Prefix",
                 yaxis_title="Number of Anomalous Callers",
                 height=row_height,
-                margin=dict(l=5, r=5, t=20, b=20),
-                title=""
+                margin=dict(l=20, r=20, t=40, b=40),
+                title="",
+                bargap=0,  # No gap between bars
+                yaxis=dict(range=[0, 1.1])  # To match your matplotlib y-axis
             )
-            st.plotly_chart(fig_prefix, use_container_width=True)
+            st.plotly_chart(fig_prefix, use_container_width=True)      
+        # # --- New plot: Spam Prefix Bar Plot ---
+        # if 'spam_prefix_bar_plot' in combined:
+        #     st.markdown("#### <span style='color:#007BFF;'>📞 Spam Call Frequency by Number Prefix</span>", unsafe_allow_html=True)
+        #     prefix_data = combined['spam_prefix_bar_plot']
+        #     fig_prefix = go.Figure(go.Bar(
+        #         x=prefix_data['prefixes'],
+        #         y=prefix_data['counts'],
+        #         marker_color='orange'
+        #     ))
+        #     fig_prefix.update_layout(
+        #         xaxis_title="Number Prefix",
+        #         yaxis_title="Number of Anomalous Callers",
+        #         height=row_height,
+        #         margin=dict(l=5, r=5, t=20, b=20),
+        #         title=""
+        #     )
+        #     st.plotly_chart(fig_prefix, use_container_width=True)
