@@ -853,26 +853,44 @@ with tabs[0]:
         with row1_col3:
             if 'spam_prefix_bar_plot' in combined:
                 st.markdown("#### <span style='color:#007BFF;'>📞 Spam Call Frequency by Number Prefix</span>", unsafe_allow_html=True)
-                prefix_data = combined['spam_prefix_bar_plot']
-                fig_prefix = go.Figure(go.Bar(
+                prefix_data = combined['spam_prefix_bar_plot']                fig_prefix = go.Figure(go.Bar(
                     x=prefix_data['prefixes'],
                     y=prefix_data['counts'],
-                    marker_color='orange',
-                    marker_line_width=0
+                    marker=dict(
+                        color='#FF7F50',  # Coral color
+                        line=dict(width=1, color='#FF6347')  # Tomato color border
+                    ),
+                    hovertemplate='Prefix: %{x}<br>Count: %{y}<extra></extra>'
                 ))
                 fig_prefix.update_layout(
-                    xaxis_title="Number Prefix",
-                    yaxis_title="Number of Anomalous Callers",
+                    xaxis_title=dict(
+                        text="Number Prefix",
+                        font=dict(size=14, color='#1a237e')
+                    ),
+                    yaxis_title=dict(
+                        text="Number of Anomalous Callers",
+                        font=dict(size=14, color='#1a237e')
+                    ),
                     height=row_height,
-                    margin=dict(l=20, r=20, t=40, b=40),
-                    bargap=0,  # Remove gap between bars
+                    margin=dict(l=20, r=20, t=40, b=60),  # Increased bottom margin for labels
+                    bargap=0.2,  # Add some gap between bars
                     yaxis=dict(
-                        gridcolor='rgba(0,0,0,0.1)', 
+                        gridcolor='rgba(0,0,0,0.1)',
                         gridwidth=1,
                         griddash='dash',
-                        tickformat=''  # Display full numbers without 'k' suffix
+                        tickformat='',  # Display full numbers without 'k' suffix
+                        tickfont=dict(size=12)
                     ),
-                    xaxis=dict(tickangle=45)
+                    xaxis=dict(
+                        tickangle=0,  # Horizontal labels
+                        tickmode='array',
+                        ticktext=prefix_data['prefixes'],
+                        tickvals=prefix_data['prefixes'],
+                        tickfont=dict(size=12),
+                        showgrid=False
+                    ),
+                    plot_bgcolor='white',  # White background
+                    showlegend=False
                 )
                 st.plotly_chart(fig_prefix, use_container_width=True)
             else:
