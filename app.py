@@ -835,7 +835,6 @@ with tabs[0]:
                     marker_line_width=0
                 ))
                 fig_prefix.update_layout(
-                    title="Spam Call Frequency by Number Prefix",
                     xaxis_title="Number Prefix",
                     yaxis_title="Number of Anomalous Callers",
                     height=row_height,
@@ -845,7 +844,7 @@ with tabs[0]:
                         gridcolor='rgba(0,0,0,0.1)', 
                         gridwidth=1,
                         griddash='dash',
-                        tickformat=""  # Display the entire number instead of adding 'k' at the end
+                        tickformat=''  # Display full numbers without 'k' suffix
                     ),
                     xaxis=dict(tickangle=45)
                 )
@@ -983,7 +982,8 @@ with tabs[0]:
                     height=row_height,
                     margin=dict(l=5, r=5, t=20, b=20),
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-                )                st.plotly_chart(fig_hist, use_container_width=True)
+                )
+                st.plotly_chart(fig_hist, use_container_width=True)
             else:
                 st.warning("Anomaly score distribution data not available.")
 
