@@ -955,7 +955,8 @@ with tabs[0]:
                     margin=dict(l=5, r=5, t=20, b=20),
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
                 )
-                st.plotly_chart(fig_hist, use_container_width=True)            else:
+                st.plotly_chart(fig_hist, use_container_width=True)
+            else:
                 st.warning("Anomaly score distribution data not available.")
                 
         # Add new spam prefix bar plot section
