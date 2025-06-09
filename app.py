@@ -707,21 +707,52 @@ with tabs[0]:
                     results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "")
                     # Add 'Add to blockchain' column (empty or with a button placeholder)
                     results_df['Add to blockchain'] = ''
-                    # Apply color formatting for anomalies in red
-                    def highlight_anomaly(row):
+
+                    # Display table with Add button for each anomaly
+                    def render_row(row):
+                        cols = st.columns([2, 2, 2, 2])
+                        cols[0].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Caller']}</span>", unsafe_allow_html=True)
+                        cols[1].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Prediction']}</span>", unsafe_allow_html=True)
+                        cols[2].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Anomaly Score']}</span>", unsafe_allow_html=True)
                         if row['Prediction'] == 'Anomaly':
-                            return ['color: red;', 'color: red;', 'color: red;', '']
+                            add_key = f"add_{row['Caller']}"
+                            if cols[3].button("Add", key=add_key):
+                                # API call logic
+                                API_BASE = "http://163.69.82.203:8095/tmf/v1"
+                                payload = {
+                                    "requestId": "000001",
+                                    "module": "tmforum",
+                                    "channelID": "globalspamdatachannel",
+                                    "chaincodeID": "qotcc",
+                                    "functionName": "addQoTRecord",
+                                    "payload": {
+                                        "msisdn": row['Caller'],
+                                        "src_o": "Jio",
+                                        "src_c": "India",
+                                        "rep_o": "Airtel",
+                                        "rep_c": "India",
+                                        "score": float(row['Anomaly Score'])
+                                    }
+                                }
+                                try:
+                                    response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
+                                    cols[3].success("Added!")
+                                    cols[3].code(response.text, language="json")
+                                except Exception as e:
+                                    cols[3].error(f"Error: {e}")
                         else:
-                            return ['', '', '', '']
-                    
-                    styled_df = results_df.style.apply(highlight_anomaly, axis=1)
-                    styled_df = styled_df.set_properties(**{'font-size': '1.1em'})
-                    styled_df = styled_df.set_table_styles([
-                        dict(selector='th', props=[('color', '#1a237e'), ('font-weight', 'bold'), ('font-size', '1.1em')])
-                    ])
-                    
-                    # Display the results table
-                    st.write(styled_df.to_html(escape=False), unsafe_allow_html=True)
+                            cols[3].markdown("")
+
+                    # Table header
+                    header_cols = st.columns([2, 2, 2, 2])
+                    header_cols[0].markdown("<b>Caller</b>", unsafe_allow_html=True)
+                    header_cols[1].markdown("<b>Prediction</b>", unsafe_allow_html=True)
+                    header_cols[2].markdown("<b>Anomaly Score</b>", unsafe_allow_html=True)
+                    header_cols[3].markdown("<b>Add to blockchain</b>", unsafe_allow_html=True)
+
+                    # Render each row
+                    for idx, row in results_df.iterrows():
+                        render_row(row)
                 else:
                     st.warning("No results found in notebook output.")
                     
