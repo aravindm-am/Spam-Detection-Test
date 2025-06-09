@@ -468,6 +468,10 @@ HARDCODED_COMBINED_ANALYSIS = {
             12,
             4
         ]
+    },
+    "time_call": {
+        "Normal": 6559,
+        "Anomaly": 3441
     }
 }
 
@@ -1016,6 +1020,27 @@ with tabs[0]:
             else:
                 st.warning("Anomaly score distribution data not available.")
 
+        # --- Time of Call Pie Chart ---
+        if 'time_call' in combined:
+            st.markdown("#### <span style='color:#007BFF;'>🕒 Time of Call Distribution</span>", unsafe_allow_html=True)
+            time_labels = list(combined['time_call'].keys())
+            time_values = list(combined['time_call'].values())
+            fig_time_call = px.pie(
+                names=time_labels,
+                values=time_values,
+                color=time_labels,
+                color_discrete_map={'Normal': '#007BFF', 'Anomaly': '#FF4B4B'},
+                hole=0.4
+            )
+            fig_time_call.update_layout(
+                height=350,
+                margin=dict(l=10, r=10, t=10, b=10),
+                legend=dict(orientation="h", yanchor="bottom", y=-0.2),
+                title="",
+                font=dict(size=14, family='Segoe UI', color='#1a237e'),
+                plot_bgcolor='white',
+            )
+            st.plotly_chart(fig_time_call, use_container_width=True)
 # Tab 2: Individual Analysis (now second)
 with tabs[1]:
     st.markdown("#### <span style='color:#007BFF;'>Check a Phone Number for Fraud</span>", unsafe_allow_html=True)
