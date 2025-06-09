@@ -692,11 +692,11 @@ with tabs[0]:
                     if output_response.status_code == 200:
                         notebook_result = output_response.json().get("notebook_output", {})
                         notebook_output = notebook_result.get("result", None)
-                        if isinstance(notebook_output, str):
-                            try:
+                        if isinstance(notebook_output, str):                            try:
                                 notebook_output = json.loads(notebook_output)
                             except:
-                                pass                if notebook_output and "results" in notebook_output:
+                                pass
+                if notebook_output and "results" in notebook_output:
                   # Display results table with caller, prediction, and anomaly_score
                     st.markdown("#### <span style='color:#007BFF;'>Scoring Results</span>", unsafe_allow_html=True)
                     results_df = pd.DataFrame(notebook_output["results"])
