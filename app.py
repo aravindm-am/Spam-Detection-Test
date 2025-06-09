@@ -799,6 +799,8 @@ with tabs[0]:
     
         # First row - 3 equal columns for the three main plots
         row1_col1, row1_col2, row1_col3 = st.columns(3, gap="medium")
+        
+        # Column 1: Top Indicators of Fraudulent Activity
         with row1_col1:
             if 'global_feature_importance' in combined:
                 st.markdown("#### <span style='color:#007BFF;'>📊 Top Indicators of Fraudulent Activity</span>", unsafe_allow_html=True)
@@ -823,8 +825,32 @@ with tabs[0]:
                 st.plotly_chart(fig_global_importance, use_container_width=True)
             else:
                 st.warning("Global feature importance data not available.")
-
-            # Add spam prefix bar plot section after the "Top Indicators of Fraudulent Activity" plot
+    
+        # Column 2: Fraud vs. Normal Call Distribution
+        with row1_col2:
+            if 'prediction_distribution' in combined:
+                st.markdown("#### <span style='color:#007BFF;'>🔄 Fraud vs. Normal Call Distribution</span>", unsafe_allow_html=True)
+                labels = list(combined['prediction_distribution'].keys())
+                values = list(combined['prediction_distribution'].values())
+                fig_pie = px.pie(
+                    names=labels,
+                    values=values,
+                    color=labels,
+                    color_discrete_map={'Normal': '#007BFF', 'Anomaly': '#FF4B4B'},
+                    hole=0.4
+                )
+                fig_pie.update_layout(
+                    height=row_height,
+                    margin=dict(l=5, r=5, t=5, b=5),
+                    legend=dict(orientation="h", yanchor="bottom", y=-0.2),
+                    title=""  # Set empty string to avoid 'undefined' label
+                )
+                st.plotly_chart(fig_pie, use_container_width=True)
+            else:
+                st.warning("Prediction distribution data not available.")
+        
+        # Column 3: Spam Call Frequency
+        with row1_col3:
             if 'spam_prefix_bar_plot' in combined:
                 st.markdown("#### <span style='color:#007BFF;'>📞 Spam Call Frequency by Number Prefix</span>", unsafe_allow_html=True)
                 prefix_data = combined['spam_prefix_bar_plot']
@@ -851,53 +877,6 @@ with tabs[0]:
                 st.plotly_chart(fig_prefix, use_container_width=True)
             else:
                 st.warning("Spam prefix data not available.")
-    
-        with row1_col2:
-            if 'prediction_distribution' in combined:
-                st.markdown("#### <span style='color:#007BFF;'>🔄 Fraud vs. Normal Call Distribution</span>", unsafe_allow_html=True)
-                labels = list(combined['prediction_distribution'].keys())
-                values = list(combined['prediction_distribution'].values())
-                fig_pie = px.pie(
-                    names=labels,
-                    values=values,
-                    color=labels,
-                    color_discrete_map={'Normal': '#007BFF', 'Anomaly': '#FF4B4B'},
-                    hole=0.4
-                )
-                fig_pie.update_layout(
-                    height=row_height,
-                    margin=dict(l=5, r=5, t=5, b=5),
-                    legend=dict(orientation="h", yanchor="bottom", y=-0.2),
-                    title=""  # Set empty string to avoid 'undefined' label
-                )
-                st.plotly_chart(fig_pie, use_container_width=True)
-            else:
-                st.warning("Prediction distribution data not available.")
-    
-        with row1_col3:
-            if 'correlation_matrix' in combined:
-                st.markdown("#### <span style='color:#007BFF;'>🔄 Correlated Call Patterns in Risk Profiles</span>", unsafe_allow_html=True)
-                important_features = ["short_call_ratio", "mean_duration", "pct_daytime", "pct_weekend"]
-                filtered_corr = {k: {k2: v2 for k2, v2 in v.items() if k2 in important_features} 
-                                for k, v in combined['correlation_matrix'].items() 
-                                if k in important_features}
-                corr_df = pd.DataFrame.from_dict(filtered_corr)
-                fig_corr = px.imshow(
-                    corr_df,
-                    color_continuous_scale='RdBu_r',
-                    zmin=-1, 
-                    zmax=1,
-                    text_auto='.2f'
-                )
-                fig_corr.update_layout(
-                    height=row_height,
-                    margin=dict(l=5, r=5, t=5, b=5),
-                    title=""  # Set empty string to avoid 'undefined' label
-                )
-                fig_corr.update_traces(texttemplate="%{text}", textfont={"size": 10})
-                st.plotly_chart(fig_corr, use_container_width=True)
-            else:
-                st.warning("Correlation matrix data not available.")  
         row2_col1, row2_col2 = st.columns(2)
         with row2_col1:
             if 'feature_distributions' in combined:
