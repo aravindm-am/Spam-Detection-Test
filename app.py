@@ -721,32 +721,41 @@ with tabs[0]:
                         if row['Prediction'] == 'Anomaly':
                             add_key = f"add_{idx}_{row['Caller']}"
                             if cols[3].button("Add", key=add_key):
-                                st.write(f"Button clicked for {row['Caller']}")
-                                payload = {
-                                    "requestId": "000001",
-                                    "module": "tmforum",
-                                    "channelID": "globalspamdatachannel",
-                                    "chaincodeID": "qotcc",
-                                    "functionName": "addQoTRecord",
-                                    "payload": {
-                                        "msisdn": row['Caller'],
-                                        "src_o": "Jio",
-                                        "src_c": "India",
-                                        "rep_o": "Airtel",
-                                        "rep_c": "India",
-                                        "score": float(row['Anomaly Score'])
-                                    }
-                                }
+                                msisdn = str(row['Caller']).strip()
                                 try:
-                                    response = requests.post(
-                                        f"{API_BASE}/invoke/",
-                                        headers={"Content-Type": "application/json"},
-                                        data=json.dumps(payload)
-                                    )
-                                    cols[3].success("Added!")
-                                    cols[3].code(response.text, language="json")
-                                except Exception as e:
-                                    cols[3].error(f"Error: {e}")
+                                    score = float(row['Anomaly Score'])
+                                except Exception:
+                                    cols[3].error("Invalid score value.")
+                                    return
+                                if msisdn and (score is not None):
+                                    payload = {
+                                        "requestId": "000001",
+                                        "module": "tmforum",
+                                        "channelID": "globalspamdatachannel",
+                                        "chaincodeID": "qotcc",
+                                        "functionName": "addQoTRecord",
+                                        "payload": {
+                                            "msisdn": msisdn,
+                                            "src_o": "Jio",
+                                            "src_c": "India",
+                                            "rep_o": "Airtel",
+                                            "rep_c": "India",
+                                            "score": score
+                                        }
+                                    }
+                                    try:
+                                        response = requests.post(
+                                            f"{API_BASE}/invoke/",
+                                            headers={"Content-Type": "application/json"},
+                                            data=json.dumps(payload)
+                                        )
+                                        cols[3].success("Added!")
+                                        cols[3].code(response.text, language="json")
+                                    except Exception as e:
+                                        cols[3].error(f"Error: {e}")
+                                        cols[3].write(payload)
+                                else:
+                                    cols[3].error("Missing msisdn or score.")
                         else:
                             cols[3].markdown("")
 
