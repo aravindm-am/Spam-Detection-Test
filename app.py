@@ -453,22 +453,6 @@ HARDCODED_COMBINED_ANALYSIS = {
     "prediction_distribution": {
         "Normal": 9582,
         "Anomaly": 942
-    },
-    "spam_prefix_bar_plot": {
-        "prefixes": [
-            "85184",
-            "76717",
-            "92044",
-            "85311",
-            "72679"
-        ],
-        "counts": [
-            1,
-            1,
-            1,
-            1,
-            1
-        ]
     }
 }
 
@@ -959,7 +943,7 @@ with tabs[0]:
                 st.plotly_chart(fig_hist, use_container_width=True)
             else:
                 st.warning("Anomaly score distribution data not available.")
-###
+
 # Tab 2: Individual Analysis (now second)
 with tabs[1]:
     st.markdown("#### <span style='color:#007BFF;'>Check a Phone Number for Fraud</span>", unsafe_allow_html=True)
@@ -1030,42 +1014,4 @@ with tabs[1]:
                 else:
                     st.error(f"❌ Job failed: {result}")
         else:
-            st.warning("📱 Please enter a valid phone number.")      
-      
-        # --- New plot: Spam Prefix Bar Plot ---
-        if 'spam_prefix_bar_plot' in combined:
-            st.markdown("#### <span style='color:#007BFF;'>📞 Spam Call Frequency by Number Prefix</span>", unsafe_allow_html=True)
-            prefix_data = combined['spam_prefix_bar_plot']
-            fig_prefix = go.Figure(go.Bar(
-                x=prefix_data['prefixes'],
-                y=prefix_data['counts'],
-                marker_color='orange',
-                marker_line_width=0
-            ))
-            fig_prefix.update_layout(
-                xaxis_title="Number Prefix",
-                yaxis_title="Number of Anomalous Callers",
-                height=row_height,
-                margin=dict(l=20, r=20, t=40, b=40),
-                title="",
-                bargap=0,  # No gap between bars
-                yaxis=dict(range=[0, 1.1])  # To match your matplotlib y-axis
-            )
-            st.plotly_chart(fig_prefix, use_container_width=True)      
-        # # --- New plot: Spam Prefix Bar Plot ---
-        # if 'spam_prefix_bar_plot' in combined:
-        #     st.markdown("#### <span style='color:#007BFF;'>📞 Spam Call Frequency by Number Prefix</span>", unsafe_allow_html=True)
-        #     prefix_data = combined['spam_prefix_bar_plot']
-        #     fig_prefix = go.Figure(go.Bar(
-        #         x=prefix_data['prefixes'],
-        #         y=prefix_data['counts'],
-        #         marker_color='orange'
-        #     ))
-        #     fig_prefix.update_layout(
-        #         xaxis_title="Number Prefix",
-        #         yaxis_title="Number of Anomalous Callers",
-        #         height=row_height,
-        #         margin=dict(l=5, r=5, t=20, b=20),
-        #         title=""
-        #     )
-        #     st.plotly_chart(fig_prefix, use_container_width=True)
+            st.warning("📱 Please enter a valid phone number.")
