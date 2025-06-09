@@ -470,8 +470,8 @@ HARDCODED_COMBINED_ANALYSIS = {
         ]
     },
     "time_call": {
-        "Normal": 6559,
-        "Anomaly": 3441
+        "Weekday": 6559,
+        "Weekend": 3441
     }
 }
 
