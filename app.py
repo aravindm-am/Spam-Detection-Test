@@ -1011,25 +1011,3 @@ with tabs[1]:
                     st.error(f"❌ Job failed: {result}")
         else:
             st.warning("📱 Please enter a valid phone number.")
-
-# --- New section: Simple Scoring Results Table ---
-st.markdown("## Scoring Results Table (Example)")
-# Example scoring results data
-scoring_results = [
-    {"Caller": "918518408444", "Prediction": "Anomaly", "Anomaly Score": 0.02},
-    {"Caller": "917671705293", "Prediction": "Anomaly", "Anomaly Score": 0.02},
-    {"Caller": "919204485316", "Prediction": "Anomaly", "Anomaly Score": 0.01},
-    {"Caller": "918531111141", "Prediction": "Anomaly", "Anomaly Score": 0.01},
-    {"Caller": "917267973248", "Prediction": "Anomaly", "Anomaly Score": 0.01},
-    {"Caller": "918867712639", "Prediction": "Normal", "Anomaly Score": -0.20},
-    {"Caller": "917085387152", "Prediction": "Normal", "Anomaly Score": -0.19},
-    {"Caller": "919950983544", "Prediction": "Normal", "Anomaly Score": -0.19},
-    {"Caller": "917982292129", "Prediction": "Normal", "Anomaly Score": -0.19},
-    {"Caller": "917919846337", "Prediction": "Normal", "Anomaly Score": -0.19},
-]
-
-# Convert to DataFrame
-results_df = pd.DataFrame(scoring_results)
-
-# Display the table
-st.dataframe(results_df, use_container_width=True)
