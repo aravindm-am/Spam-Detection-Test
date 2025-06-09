@@ -462,11 +462,11 @@ HARDCODED_COMBINED_ANALYSIS = {
             "72679"
         ],
         "counts": [
-            1,
-            1,
-            1,
-            1,
-            1
+            10,
+            7,
+            5,
+            12,
+            10
         ]
     }
 }
@@ -823,6 +823,38 @@ with tabs[0]:
                 st.plotly_chart(fig_global_importance, use_container_width=True)
             else:
                 st.warning("Global feature importance data not available.")
+
+            # Move the spam prefix bar plot section after the "Top Indicators of Fraudulent Activity" plot.
+            if 'spam_prefix_bar_plot' in combined:
+                st.markdown("#### <span style='color:#007BFF;'>📞 Spam Call Frequency by Number Prefix</span>", unsafe_allow_html=True)
+                prefix_data = combined['spam_prefix_bar_plot']
+                fig_prefix = go.Figure(go.Bar(
+                    x=prefix_data['prefixes'],
+                    y=prefix_data['counts'],
+                    marker_color='orange',
+                    marker_line_width=0
+                ))
+                fig_prefix.update_layout(
+                    title="Spam Call Frequency by Number Prefix",
+                    xaxis_title="Number Prefix",
+                    yaxis_title="Number of Anomalous Callers",
+                    height=row_height,
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    bargap=0,  # Remove gap between bars
+                    yaxis=dict(
+                        gridcolor='rgba(0,0,0,0.1)', 
+                        gridwidth=1,
+                        griddash='dash'
+                    ),
+                    xaxis=dict(tickangle=45)
+                )
+                # Update the axis to display the entire number instead of adding 'k' at the end.
+                fig_prefix.update_layout(
+                    yaxis=dict(tickformat="")
+                )
+                st.plotly_chart(fig_prefix, use_container_width=True)
+            else:
+                st.warning("Spam prefix data not available.")
     
         with row1_col2:
             if 'prediction_distribution' in combined:
@@ -982,6 +1014,10 @@ with tabs[0]:
                     griddash='dash'
                 ),
                 xaxis=dict(tickangle=45)
+            )
+            # Update the axis to display the entire number instead of adding 'k' at the end.
+            fig_prefix.update_layout(
+                yaxis=dict(tickformat="")
             )
             st.plotly_chart(fig_prefix, use_container_width=True)
 
