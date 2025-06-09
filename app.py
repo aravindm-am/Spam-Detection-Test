@@ -739,11 +739,11 @@ with tabs[0]:
                                         "score": float(row['Anomaly Score'])
                                     }
                                 }
-                                try:
+                              try:
                                     response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
                                     cols[3].success("Added!")
                                     cols[3].code(response.text, language="json")
-                                except Exception as e:
+                              except Exception as e:
                                     cols[3].error(f"Error: {e}")
                                     cols[3].write(traceback.format_exc())
                                     
