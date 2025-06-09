@@ -720,13 +720,15 @@ with tabs[0]:
                         cols[2].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Anomaly Score']}</span>", unsafe_allow_html=True)
                         if row['Prediction'] == 'Anomaly':
                             add_key = f"add_{idx}_{row['Caller']}"
+                            if add_key not in st.session_state:
+                                st.session_state[add_key] = None
                             if cols[3].button("Add", key=add_key):
                                 msisdn = str(row['Caller']).strip()
                                 try:
                                     score = float(row['Anomaly Score'])
                                 except Exception:
-                                    cols[3].error("Invalid score value.")
-                                    return
+                                    st.session_state[add_key] = (False, "Invalid score value.")
+                                    st.experimental_rerun()
                                 if msisdn and (score is not None):
                                     payload = {
                                         "requestId": "000001",
@@ -749,13 +751,23 @@ with tabs[0]:
                                             headers={"Content-Type": "application/json"},
                                             data=json.dumps(payload)
                                         )
-                                        cols[3].success("Added!")
-                                        cols[3].code(response.text, language="json")
+                                        if response.status_code == 200 and ("SUCCESS" in response.text or 'success' in response.text.lower()):
+                                            st.session_state[add_key] = (True, "Added to blockchain!")
+                                        else:
+                                            st.session_state[add_key] = (False, f"Error: {response.text}")
                                     except Exception as e:
-                                        cols[3].error(f"Error: {e}")
-                                        cols[3].write(payload)
+                                        st.session_state[add_key] = (False, f"Error: {e}")
+                                    st.experimental_rerun()
                                 else:
-                                    cols[3].error("Missing msisdn or score.")
+                                    st.session_state[add_key] = (False, "Missing msisdn or score.")
+                                    st.experimental_rerun()
+                            # Show result message if present
+                            if st.session_state[add_key] is not None:
+                                success, msg = st.session_state[add_key]
+                                if success:
+                                    cols[3].success(msg)
+                                else:
+                                    cols[3].error(msg)
                         else:
                             cols[3].markdown("")
 
