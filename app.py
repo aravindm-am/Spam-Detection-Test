@@ -739,7 +739,7 @@ with tabs[0]:
                                 }
                                 try:
                                     response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
-                                    st.code(response.text, language="json"
+                                    
                                     cols[3].success("Added!")
                                     cols[3].code(response.text, language="json")
                                 except Exception as e:
