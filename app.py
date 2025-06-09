@@ -850,10 +850,10 @@ with tabs[0]:
                 st.warning("Prediction distribution data not available.")
         
         # Column 3: Spam Call Frequency
-        with row1_col3:
-            if 'spam_prefix_bar_plot' in combined:
+        with row1_col3:            if 'spam_prefix_bar_plot' in combined:
                 st.markdown("#### <span style='color:#007BFF;'>📞 Spam Call Frequency by Number Prefix</span>", unsafe_allow_html=True)
-                prefix_data = combined['spam_prefix_bar_plot']                fig_prefix = go.Figure(go.Bar(
+                prefix_data = combined['spam_prefix_bar_plot']
+                fig_prefix = go.Figure(go.Bar(
                     x=prefix_data['prefixes'],
                     y=prefix_data['counts'],
                     marker=dict(
