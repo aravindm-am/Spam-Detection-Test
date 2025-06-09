@@ -1060,11 +1060,13 @@ with tabs[1]:
 
                     st.subheader("📞 Prediction Summary")
                     st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>Phone Number</b>: <code>{phone_number}</code></span>", unsafe_allow_html=True)
-                    if 'prediction' in shap_data:
+                    not_found = False
+                    if 'prediction' in shap_data and shap_data['prediction'] is not None:
                         st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>Prediction</b>: <code>{shap_data['prediction']}</code></span>", unsafe_allow_html=True)
                     else:
                         st.warning("Prediction not available for this number.")
-                    if 'anomaly_score' in shap_data:
+                        not_found = True
+                    if 'anomaly_score' in shap_data and shap_data['anomaly_score'] is not None:
                         st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>Anomaly Score</b>: <code>{shap_data['anomaly_score']:.4f}</code></span>", unsafe_allow_html=True)
                     if 'explanation' in shap_data and shap_data['explanation']:
                         st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>AI Explanation</b>: {shap_data['explanation']}</span>", unsafe_allow_html=True)
@@ -1116,8 +1118,8 @@ with tabs[1]:
                             )
                             st.plotly_chart(fig_waterfall, use_container_width=True)
                     else:
+                        not_found = True
+                    if not_found:
                         st.info("Number not found in dataset.")
-                else:
-                    st.error(f"❌ Job failed: {result}")
         else:
             st.warning("📱 Please enter a valid phone number.")
