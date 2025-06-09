@@ -1029,7 +1029,7 @@ with tabs[0]:
                 names=time_labels,
                 values=time_values,
                 color=time_labels,
-                color_discrete_map={'Normal': '#007BFF', 'Anomaly': '#FF4B4B'},
+                color_discrete_map={'Weekday': '#007BFF', 'Weekend': '#FF4B4B'},
                 hole=0.4
             )
             fig_time_call.update_layout(
