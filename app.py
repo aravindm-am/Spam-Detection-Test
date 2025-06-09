@@ -449,10 +449,25 @@ HARDCODED_COMBINED_ANALYSIS = {
                 "max": 4.721
             }
         }
-    },
-    "prediction_distribution": {
+    },    "prediction_distribution": {
         "Normal": 9582,
         "Anomaly": 942
+    },
+    "spam_prefix_bar_plot": {
+        "prefixes": [
+            "85184",
+            "76717",
+            "92044",
+            "85311",
+            "72679"
+        ],
+        "counts": [
+            1,
+            1,
+            1,
+            1,
+            1
+        ]
     }
 }
 
@@ -940,9 +955,34 @@ with tabs[0]:
                     margin=dict(l=5, r=5, t=20, b=20),
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
                 )
-                st.plotly_chart(fig_hist, use_container_width=True)
-            else:
+                st.plotly_chart(fig_hist, use_container_width=True)            else:
                 st.warning("Anomaly score distribution data not available.")
+                
+        # Add new spam prefix bar plot section
+        if 'spam_prefix_bar_plot' in combined:
+            st.markdown("#### <span style='color:#007BFF;'>📞 Spam Call Frequency by Number Prefix</span>", unsafe_allow_html=True)
+            prefix_data = combined['spam_prefix_bar_plot']
+            fig_prefix = go.Figure(go.Bar(
+                x=prefix_data['prefixes'],
+                y=prefix_data['counts'],
+                marker_color='orange',
+                marker_line_width=0
+            ))
+            fig_prefix.update_layout(
+                title="Spam Call Frequency by Number Prefix",
+                xaxis_title="Number Prefix",
+                yaxis_title="Number of Anomalous Callers",
+                height=row_height,
+                margin=dict(l=20, r=20, t=40, b=40),
+                bargap=0,  # Remove gap between bars
+                yaxis=dict(
+                    gridcolor='rgba(0,0,0,0.1)', 
+                    gridwidth=1,
+                    griddash='dash'
+                ),
+                xaxis=dict(tickangle=45)
+            )
+            st.plotly_chart(fig_prefix, use_container_width=True)
 
 # Tab 2: Individual Analysis (now second)
 with tabs[1]:
