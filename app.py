@@ -701,19 +701,21 @@ with tabs[0]:
                   # Display results table with caller, prediction, and anomaly_score
                     st.markdown("#### <span style='color:#007BFF;'>Scoring Results</span>", unsafe_allow_html=True)
                     results_df = pd.DataFrame(notebook_output["results"])
-                    # Rename columns for display to match Image 2 and add blockchain column
                     results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
-                    # Format anomaly scores to two decimal places as string
                     results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "")
-                    # Add 'Add to blockchain' column (empty or with a button placeholder)
-                    results_df['Add to blockchain'] = ''
-
-                    # Display table with Add button for each anomaly
-                    def render_row(row):
+                    # Table header
+                    header_cols = st.columns([2, 2, 2, 2])
+                    header_cols[0].markdown("<b>Caller</b>", unsafe_allow_html=True)
+                    header_cols[1].markdown("<b>Prediction</b>", unsafe_allow_html=True)
+                    header_cols[2].markdown("<b>Anomaly Score</b>", unsafe_allow_html=True)
+                    header_cols[3].markdown("<b>Add to blockchain</b>", unsafe_allow_html=True)
+                    # Render each row
+                    for idx, row in results_df.iterrows():
                         cols = st.columns([2, 2, 2, 2])
-                        cols[0].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Caller']}</span>", unsafe_allow_html=True)
-                        cols[1].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Prediction']}</span>", unsafe_allow_html=True)
-                        cols[2].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Anomaly Score']}</span>", unsafe_allow_html=True)
+                        color = 'red' if row['Prediction'] == 'Anomaly' else '#1a237e'
+                        cols[0].markdown(f"<span style='color:{color};'>{row['Caller']}</span>", unsafe_allow_html=True)
+                        cols[1].markdown(f"<span style='color:{color};'>{row['Prediction']}</span>", unsafe_allow_html=True)
+                        cols[2].markdown(f"<span style='color:{color};'>{row['Anomaly Score']}</span>", unsafe_allow_html=True)
                         if row['Prediction'] == 'Anomaly':
                             add_key = f"add_{row['Caller']}"
                             if cols[3].button("Add", key=add_key):
@@ -743,16 +745,6 @@ with tabs[0]:
                         else:
                             cols[3].markdown("")
 
-                    # Table header
-                    header_cols = st.columns([2, 2, 2, 2])
-                    header_cols[0].markdown("<b>Caller</b>", unsafe_allow_html=True)
-                    header_cols[1].markdown("<b>Prediction</b>", unsafe_allow_html=True)
-                    header_cols[2].markdown("<b>Anomaly Score</b>", unsafe_allow_html=True)
-                    header_cols[3].markdown("<b>Add to blockchain</b>", unsafe_allow_html=True)
-
-                    # Render each row
-                    for idx, row in results_df.iterrows():
-                        render_row(row)
                 else:
                     st.warning("No results found in notebook output.")
                     
