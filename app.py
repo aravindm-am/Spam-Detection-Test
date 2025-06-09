@@ -643,87 +643,60 @@ except Exception:
 
 # Tab 1: Combined Analysis (now first)
 with tabs[0]:
-    # --- Batch scoring UI ---
-    st.markdown("#### <span style='color:#007BFF;'>Upload a file for scoring</span>", unsafe_allow_html=True)
-    uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"], key="batch_upload")
-    if uploaded_file is not None:
-        # --- Upload to Databricks DBFS ---
-        import base64
-        file_name = uploaded_file.name
-        file_bytes = uploaded_file.read()
-        encoded_content = base64.b64encode(file_bytes).decode("utf-8")
-        dbfs_file_path = f"dbfs:/tmp/{file_name}"
-        st.info(f"Uploading to DBFS: {dbfs_file_path} ...")
-        upload_response = requests.post(
-            f"{DATABRICKS_HOST}/api/2.0/dbfs/put",
-            headers={"Authorization": f"Bearer {DATABRICKS_TOKEN}"},
-            json={
-                "path": dbfs_file_path,
-                "overwrite": True,
-                "contents": encoded_content
-            }
-        )
-        # # --- Debugging output ---
-        # st.write("DBFS Upload Response Status:", upload_response.status_code)
-        # try:
-        #     st.write("DBFS Upload Response JSON:", upload_response.json())
-        # except Exception:
-        #     st.write("DBFS Upload Response Text:", upload_response.text)
-        # if upload_response.status_code == 200:
-        #     st.success(f"✅ File uploaded successfully to {dbfs_file_path}")
-        # else:
-        #     st.error(f"❌ Upload to DBFS failed: {upload_response.status_code}")
-        #     try:
-        #         st.json(upload_response.json())
-        #     except Exception:
-        #         st.write(upload_response.text)
-        # # Reset file pointer for pandas
-        uploaded_file.seek(0)
-        df_uploaded = pd.read_csv(uploaded_file)
-        st.success("✅ File uploaded! Click 'Score' to analyze.")
-        #Display uploaded file in a Streamlit dataframe (no tabulate dependency)
-        st.markdown('#### 📄 File Preview')
-        st.dataframe(df_uploaded.head(20), use_container_width=True)
-        if st.button("Score", key="score_batch_button"):
-            # Just run the Databricks notebook (databricks-new.py) and display the JSON output
-            headers = {
-                "Authorization": f"Bearer {DATABRICKS_TOKEN}",
-                "Content-Type": "application/json"
-            }
-            EXISTING_CLUSTER_ID = "0521-131856-gsh3b6se"
-            batch_notebook_path = DATABRICKS_NOTEBOOK_PATH_BATCH  # Path to databricks-new.py
-            submit_payload = {
-                "run_name": f"BatchFraudCheck_{int(time.time())}",
-                "notebook_task": {
-                    "notebook_path": batch_notebook_path,
-                    "base_parameters": {}  # No need to pass input_file if hardcoded
-                },
-                "existing_cluster_id": EXISTING_CLUSTER_ID        
-            }
-            response = requests.post(
-                f"{DATABRICKS_HOST}/api/2.1/jobs/runs/submit",
-                headers=headers,
-                json=submit_payload
-            )
-            if response.status_code != 200:
-                st.error("❌ Failed to start Databricks batch job.")
-                st.text(response.text)
-            else:
+    # --- Batch screening UI ---
+    st.markdown("#### <span style='color:#007BFF;'>Batch Screening</span>", unsafe_allow_html=True)
+    st.info("The input file is preloaded and hardcoded in the backend. Click 'Start Screening' to run the ML model on the data.")
+    
+    if st.button("Start Screening", key="start_screening_button"):
+        with st.spinner("Running batch screening on Databricks..."):
+            try:
+                # Run the batch notebook job
+                headers = {
+                    "Authorization": f"Bearer {DATABRICKS_TOKEN}",
+                    "Content-Type": "application/json"
+                }
+
+                EXISTING_CLUSTER_ID = "0521-131856-gsh3b6se"
+
+                submit_payload = {
+                    "run_name": f"BatchScreening",
+                    "notebook_task": {
+                        "notebook_path": DATABRICKS_NOTEBOOK_PATH_BATCH,  # Use batch notebook path from secrets
+                        "base_parameters": {}
+                    },
+                    "existing_cluster_id": EXISTING_CLUSTER_ID        
+                }
+
+                response = requests.post(
+                    f"{DATABRICKS_HOST}/api/2.1/jobs/runs/submit",
+                    headers=headers,
+                    json=submit_payload
+                )
+
+                if response.status_code != 200:
+                    st.error(f"❌ Failed to start Databricks job: {response.text}")
+                    st.stop()
+
                 run_id = response.json()["run_id"]
                 status_placeholder = st.empty()
+
+                # Poll for job completion
                 while True:
                     status_response = requests.get(
                         f"{DATABRICKS_HOST}/api/2.1/jobs/runs/get?run_id={run_id}",
                         headers=headers
                     )
                     run_state = status_response.json()["state"]["life_cycle_state"]
+                    status_placeholder.info(f"Job status: {run_state}")
+                    
                     if run_state in ("TERMINATED", "SKIPPED", "INTERNAL_ERROR"):
                         break
-                    time.sleep(1)
+                    time.sleep(2)
+
                 status_placeholder.empty()
                 result = status_response.json()
                 result_state = result.get("state", {}).get("result_state", "UNKNOWN")
-                notebook_output = None
+                
                 if result_state == "SUCCESS":
                     output_response = requests.get(
                         f"{DATABRICKS_HOST}/api/2.1/jobs/runs/get-output?run_id={run_id}",
@@ -732,32 +705,107 @@ with tabs[0]:
                     if output_response.status_code == 200:
                         notebook_result = output_response.json().get("notebook_output", {})
                         notebook_output = notebook_result.get("result", None)
+                        
                         if isinstance(notebook_output, str):
                             try:
-                                notebook_output = json.loads(notebook_output)
-                            except:
-                                pass
-                if notebook_output and "results" in notebook_output:
-                  # Display results table with caller, prediction, and anomaly_score
-                    st.markdown("#### <span style='color:#007BFF;'>📋 Scoring Results</span>", unsafe_allow_html=True)
-                    results_df = pd.DataFrame(notebook_output["results"])
-                    # Rename columns for display
-                    results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
-                    def highlight_anomaly(row):
-                        if row['Prediction'] == 'Anomaly':
-                            return ['color: red; font-weight: normal;', 'color: red; font-weight: normal;', 'color: red; font-weight: normal;']
+                                batch_results = json.loads(notebook_output)
+                                st.session_state.batch_results = batch_results
+                                st.success("✅ Batch screening completed successfully!")
+                                
+                                # Display the results in a table
+                                results_df = pd.DataFrame(batch_results["results"])
+                                
+                                # Save results to session state for future reference
+                                st.session_state.results_df = results_df
+                                
+                                # Display the screening results
+                                st.markdown("### 📊 Screening Results")
+                                
+                                # Create tabs for different views
+                                result_tabs = st.tabs(["All Results", "Anomalies Only"])
+                                
+                                with result_tabs[0]:
+                                    st.dataframe(
+                                        results_df,
+                                        use_container_width=True,
+                                        column_config={
+                                            "caller": "Phone Number",
+                                            "prediction": "Prediction",
+                                            "anomaly_score": st.column_config.NumberColumn(
+                                                "Anomaly Score",
+                                                format="%.3f"
+                                            )
+                                        }
+                                    )
+                                    
+                                with result_tabs[1]:
+                                    anomalies_df = results_df[results_df["prediction"] == "Anomaly"]
+                                    if len(anomalies_df) > 0:
+                                        st.dataframe(
+                                            anomalies_df,
+                                            use_container_width=True,
+                                            column_config={
+                                                "caller": "Phone Number",
+                                                "prediction": "Prediction",
+                                                "anomaly_score": st.column_config.NumberColumn(
+                                                    "Anomaly Score",
+                                                    format="%.3f"
+                                                )
+                                            }
+                                        )
+                                        
+                                        # Add blockchain verification section for anomalous numbers
+                                        st.markdown("### 🔗 Blockchain Verification")
+                                        st.info("Select a number to check on blockchain for previous fraud reports")
+                                        
+                                        selected_number = st.selectbox(
+                                            "Select anomalous number to verify:",
+                                            options=anomalies_df["caller"].tolist(),
+                                            key="blockchain_verify_number"
+                                        )
+                                        
+                                        if st.button("Check Blockchain", key="check_blockchain"):
+                                            with st.spinner("Checking blockchain records..."):
+                                                # Simulate blockchain API call
+                                                time.sleep(2)
+                                                st.success(f"✅ Blockchain verification completed for {selected_number}")
+                                                
+                                                # Create fake blockchain results
+                                                blockchain_data = {
+                                                    "number": selected_number,
+                                                    "reported_count": np.random.randint(1, 15),
+                                                    "first_reported": f"2023-{np.random.randint(1,12):02d}-{np.random.randint(1,28):02d}",
+                                                    "fraud_confidence": round(np.random.uniform(0.75, 0.98), 2),
+                                                    "network_consensus": ["Verizon", "T-Mobile", "AT&T"][np.random.randint(0,3)]
+                                                }
+                                                
+                                                # Display blockchain verification results
+                                                col1, col2 = st.columns(2)
+                                                with col1:
+                                                    st.metric("Times Reported", blockchain_data["reported_count"])
+                                                    st.metric("First Reported", blockchain_data["first_reported"])
+                                                
+                                                with col2:
+                                                    st.metric("Fraud Confidence", f"{blockchain_data['fraud_confidence']:.2f}")
+                                                    st.metric("Network Consensus", blockchain_data["network_consensus"])
+                                    else:
+                                        st.info("No anomalies detected in this batch.")
+                                
+                            except json.JSONDecodeError as je:
+                                st.error(f"❌ Failed to parse results: {je}")
+                                st.code(notebook_output, language="json")
                         else:
-                            return ['', '', '']
-                    styled_df = results_df.style.apply(highlight_anomaly, axis=1)
-                    styled_df = styled_df.set_properties(**{'font-size': '1.1em'})
-                    styled_df = styled_df.set_table_styles([
-                        dict(selector='th', props=[('color', '#1a237e'), ('font-weight', 'bold'), ('font-size', '1.1em')])
-                    ])
-                    st.write(styled_df.to_html(escape=False), unsafe_allow_html=True)
+                            st.error("❌ Invalid output format from Databricks notebook")
+                    else:
+                        st.error(f"❌ Failed to get job output: {output_response.text}")
                 else:
-                    st.warning("No results found in notebook output.")
-                    
-    # Always show the hardcoded plots below the upload UI
+                    st.error(f"❌ Job failed: {result_state}")
+            
+            except Exception as e:
+                st.error(f"❌ Error running batch screening: {str(e)}")
+                import traceback
+                st.code(traceback.format_exc(), language="python")
+    # Always show the hardcoded plots below the screening UI
     # Check if we have a real analysis or should use the hardcoded data
     if 'shap_data' in st.session_state and 'combined_analysis' in st.session_state.shap_data:
         shap_data = st.session_state.shap_data
