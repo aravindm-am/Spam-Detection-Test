@@ -693,7 +693,7 @@ with tabs[0]:
                         notebook_result = output_response.json().get("notebook_output", {})
                         notebook_output = notebook_result.get("result", None)
                         if isinstance(notebook_output, str):
-                          try:
+                            try:
                                 notebook_output = json.loads(notebook_output)
                             except:
                                 pass
