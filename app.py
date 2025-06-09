@@ -794,13 +794,11 @@ with tabs[0]:
         available_height = st.session_state['viewport_height'] - header_height - padding
         # 2 rows: each row gets half the available height
         row_height = max(200, int(available_height / 2))
-        # 4 columns for the first row
-        col_width = int(st.session_state['viewport_width'] / 4)
-    
-        # First row - 4 equal columns for the plots
-        row1_col1, row1_col2, row1_col3, row1_col4 = st.columns(4, gap="medium")
-        
-        # Column 1: Top Indicators of Fraudulent Activity
+        # 3 columns for each row
+        col_width = int(st.session_state['viewport_width'] / 3)
+
+        # --- ROW 1 ---
+        row1_col1, row1_col2, row1_col3 = st.columns(3, gap="medium")
         with row1_col1:
             if 'global_feature_importance' in combined:
                 st.markdown("#### <span style='color:#007BFF;'>📊 Top Indicators of Fraudulent Activity</span>", unsafe_allow_html=True)
@@ -819,14 +817,14 @@ with tabs[0]:
                 )
                 fig_global_importance.update_layout(
                     height=row_height,
-                    margin=dict(l=5, r=5, t=5, b=5),
-                    title=""  # Set empty string to avoid 'undefined' label
+                    margin=dict(l=10, r=10, t=10, b=10),
+                    title="",
+                    font=dict(size=14, family='Segoe UI', color='#1a237e'),
+                    plot_bgcolor='white',
                 )
                 st.plotly_chart(fig_global_importance, use_container_width=True)
             else:
                 st.warning("Global feature importance data not available.")
-    
-        # Column 2: Fraud vs. Normal Call Distribution
         with row1_col2:
             if 'prediction_distribution' in combined:
                 st.markdown("#### <span style='color:#007BFF;'>🔄 Fraud vs. Normal Call Distribution</span>", unsafe_allow_html=True)
@@ -841,15 +839,16 @@ with tabs[0]:
                 )
                 fig_pie.update_layout(
                     height=row_height,
-                    margin=dict(l=5, r=5, t=5, b=5),
+                    margin=dict(l=10, r=10, t=10, b=10),
                     legend=dict(orientation="h", yanchor="bottom", y=-0.2),
-                    title=""  # Set empty string to avoid 'undefined' label
+                    title="",
+                    font=dict(size=14, family='Segoe UI', color='#1a237e'),
+                    plot_bgcolor='white',
                 )
                 st.plotly_chart(fig_pie, use_container_width=True)
             else:
                 st.warning("Prediction distribution data not available.")
-        
-        # Column 3: Spam Call Frequency        with row1_col3:
+        with row1_col3:
             if 'spam_prefix_bar_plot' in combined:
                 st.markdown("#### <span style='color:#007BFF;'>📞 Spam Call Frequency by Number Prefix</span>", unsafe_allow_html=True)
                 prefix_data = combined['spam_prefix_bar_plot']
@@ -890,12 +889,16 @@ with tabs[0]:
                         showgrid=False
                     ),
                     plot_bgcolor='white',  # White background
-                    showlegend=False
+                    showlegend=False,
+                    font=dict(size=14, family='Segoe UI', color='#1a237e'),
                 )
                 st.plotly_chart(fig_prefix, use_container_width=True)
             else:
                 st.warning("Spam prefix data not available.")
-        with row1_col4:
+
+        # --- ROW 2 ---
+        row2_col1, row2_col2, row2_col3 = st.columns(3, gap="medium")
+        with row2_col1:
             if 'correlation_matrix' in combined:
                 st.markdown("#### <span style='color:#007BFF;'>🔄 Correlated Call Patterns</span>", unsafe_allow_html=True)
                 important_features = ["short_call_ratio", "mean_duration", "pct_daytime", "pct_weekend"]
@@ -912,15 +915,16 @@ with tabs[0]:
                 )
                 fig_corr.update_layout(
                     height=row_height,
-                    margin=dict(l=5, r=5, t=5, b=5),
-                    title=""  # Set empty string to avoid 'undefined' label
+                    margin=dict(l=10, r=10, t=10, b=10),
+                    title="",
+                    font=dict(size=14, family='Segoe UI', color='#1a237e'),
+                    plot_bgcolor='white',
                 )
-                fig_corr.update_traces(texttemplate="%{text}", textfont={"size": 10})
+                fig_corr.update_traces(texttemplate="%{text}", textfont={"size": 12})
                 st.plotly_chart(fig_corr, use_container_width=True)
             else:
                 st.warning("Correlation matrix data not available.")
-        row2_col1, row2_col2 = st.columns(2)
-        with row2_col1:
+        with row2_col2:
             if 'feature_distributions' in combined:
                 st.markdown("#### <span style='color:#007BFF;'>📈 Spotting Risk Through Call Behavior</span>", unsafe_allow_html=True)
                 feature_options = list(combined['feature_distributions'].keys())
@@ -950,17 +954,19 @@ with tabs[0]:
                         marker_color='#FF4B4B'
                     ))
                     fig_dist.update_layout(
-                        title="",  # Set empty string to avoid 'undefined' label
+                        title="",
                         xaxis_title="Value",
                         barmode='group',
                         height=row_height,
-                        margin=dict(l=5, r=5, t=20, b=20),
-                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                        margin=dict(l=10, r=10, t=10, b=10),
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                        font=dict(size=14, family='Segoe UI', color='#1a237e'),
+                        plot_bgcolor='white',
                     )
                     st.plotly_chart(fig_dist, use_container_width=True)
             else:
                 st.warning("Feature distribution data not available.")
-        with row2_col2:
+        with row2_col3:
             if 'anomaly_score_distribution' in combined:
                 st.markdown("#### <span style='color:#007BFF;'>🔔 Likelihood of Fraud Across Users</span>", unsafe_allow_html=True)
                 hist_data = combined['anomaly_score_distribution']['histogram_data']
@@ -996,13 +1002,15 @@ with tabs[0]:
                     text=bin_labels
                 ))
                 fig_hist.update_layout(
-                    title="",  # Set empty string to avoid 'undefined' label
+                    title="",
                     xaxis_title="Anomaly Score",
                     yaxis_title="Count",
                     barmode='group',
                     height=row_height,
-                    margin=dict(l=5, r=5, t=20, b=20),
-                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                    margin=dict(l=10, r=10, t=10, b=10),
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                    font=dict(size=14, family='Segoe UI', color='#1a237e'),
+                    plot_bgcolor='white',
                 )
                 st.plotly_chart(fig_hist, use_container_width=True)
             else:
