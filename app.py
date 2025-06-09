@@ -12,6 +12,8 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 
+API_BASE = "http://163.69.82.203:8095/tmf/v1"
+
 # Streamlit UI
 # Remove blank spaces before the title by injecting CSS to set margin-top: 0 for .block-container and .main
 st.markdown('''
@@ -708,6 +710,8 @@ with tabs[0]:
                     # Add 'Add to blockchain' column (empty or with a button placeholder)
                     results_df['Add to blockchain'] = ''
 
+                                      
+
                     # Display table with Add button for each anomaly
                     def render_row(row):
                         cols = st.columns([2, 2, 2, 2])
@@ -715,10 +719,11 @@ with tabs[0]:
                         cols[1].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Prediction']}</span>", unsafe_allow_html=True)
                         cols[2].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Anomaly Score']}</span>", unsafe_allow_html=True)
                         if row['Prediction'] == 'Anomaly':
-                            add_key = f"add_{row['Caller']}"
+                            add_key = f"add_{idx}_{row['Caller']}"
                             if cols[3].button("Add", key=add_key):
+                              st.write(f"Button clicked for {row['Caller']}")
                                 # API call logic
-                                API_BASE = "http://163.69.82.203:8095/tmf/v1"
+                                # API_BASE = "http://163.69.82.203:8095/tmf/v1"
                                 payload = {
                                     "requestId": "000001",
                                     "module": "tmforum",
@@ -740,6 +745,8 @@ with tabs[0]:
                                     cols[3].code(response.text, language="json")
                                 except Exception as e:
                                     cols[3].error(f"Error: {e}")
+                                    cols[3].write(traceback.format_exc())
+                                    
                         else:
                             cols[3].markdown("")
 
