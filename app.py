@@ -1116,7 +1116,7 @@ with tabs[1]:
                             )
                             st.plotly_chart(fig_waterfall, use_container_width=True)
                     else:
-                        st.info("No feature importance data available for this number.")
+                        st.info("Number not found in dataset.")
                 else:
                     st.error(f"❌ Job failed: {result}")
         else:
