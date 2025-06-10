@@ -1213,3 +1213,12 @@ if st.session_state.get('scoring_results'):
     header_cols[3].markdown("<b>Add to blockchain</b>", unsafe_allow_html=True)
     for idx, row in results_df.iterrows():
         render_row(row, idx)
+
+
+   # --- Scoring Results Table State Management ---
+if 'scoring_results' not in st.session_state:
+    st.session_state['scoring_results'] = None
+
+# After screening, store results in session state
+if 'notebook_output' in locals() and notebook_output and "results" in notebook_output:
+    st.session_state['scoring_results'] = notebook_output["results"]
