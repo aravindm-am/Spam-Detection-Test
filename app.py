@@ -742,7 +742,7 @@ with tabs[0]:
                         cols[2].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Anomaly Score']}</span>", unsafe_allow_html=True)
                     
                         if row['Prediction'] == 'Anomaly':
-                            add_key = f"add_{idx}_{row['Caller']}"  # now idx is valid
+                            add_key = f"add_{idx}_{row['Caller']}"  # now idx is valid                            
                             if cols[3].button("Add", key=add_key):
                                 st.write(f"Button clicked for {row['Caller']}")
                                 payload = {
