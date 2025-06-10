@@ -1123,15 +1123,3 @@ with tabs[1]:
                         st.info("Number not found in dataset.")
         else:
             st.warning("📱 Please enter a valid phone number.")
-
-# --- Scoring Results Table State Management ---
-if 'scoring_results' not in st.session_state:
-    st.session_state['scoring_results'] = None
-
-# After screening, store results in session state
-if 'notebook_output' in locals() and notebook_output and "results" in notebook_output:
-    st.session_state['scoring_results'] = notebook_output["results"]
-
-# No need to render the results table again here, as it is already rendered above after screening.
-# The API call for "Add" is already handled in the main results table rendering logic above.
-# This block is now intentionally left empty to avoid duplicate rendering.
