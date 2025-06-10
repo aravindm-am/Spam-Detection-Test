@@ -750,7 +750,7 @@ with tabs[0]:
                                     "chaincodeID": "qotcc",
                                     "functionName": "addQoTRecord",
                                     "payload": {
-                                        "msisdn": row['Caller'],
+                                        "msisdn": str(row['Caller']),
                                         "src_o": "Jio",
                                         "src_c": "India",
                                         "rep_o": "Airtel",
