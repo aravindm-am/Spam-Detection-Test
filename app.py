@@ -731,6 +731,10 @@ with tabs[0]:
                     # Add 'Add to blockchain' column (empty or with a button placeholder)
                     results_df['Add to blockchain'] = ''
 
+                    # --- Save scoring results into session state ---
+                    st.session_state['scoring_results'] = results_df.to_dict("records")
+                    st.session_state['show_scoring_results'] = True
+
                                       
 
                     # Display table with Add button for each anomaly
@@ -775,9 +779,9 @@ with tabs[0]:
                     header_cols[2].markdown("<b>Anomaly Score</b>", unsafe_allow_html=True)
                     header_cols[3].markdown("<b>Add to blockchain</b>", unsafe_allow_html=True)
 
-                    # Render each row
-                    for idx, row in results_df.iterrows():
-                        render_row(row)
+                    # # Render each row
+                    # for idx, row in results_df.iterrows():
+                    #     render_row(row)
                 else:
                     st.warning("No results found in notebook output.")
                     
