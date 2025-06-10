@@ -1137,6 +1137,9 @@ if 'notebook_output' in locals() and notebook_output and "results" in notebook_o
     st.session_state['scoring_results'] = notebook_output["results"]
 
 def render_scoring_results_table():
+    if not st.session_state.get('scoring_results'):
+        return
+    
     results_df = pd.DataFrame(st.session_state['scoring_results'])
     results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
     results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "")
