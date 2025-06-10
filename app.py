@@ -781,6 +781,10 @@ with tabs[0]:
                 else:
                     st.warning("No results found in notebook output.")
                     
+    # Always render the scoring results table above the plots if results exist
+    if st.session_state.get('scoring_results'):
+        render_scoring_results_table()
+
     # Always show the hardcoded plots below the upload UI
     # Check if we have a real analysis or should use the hardcoded data
     if 'shap_data' in st.session_state and 'combined_analysis' in st.session_state.shap_data:
@@ -1166,21 +1170,6 @@ def render_scoring_results_table():
                     response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
                     cols[3].success("Added!")
                     cols[3].code(response.text, language="json")
-                    # Display the scoring results table output here after add
-                    st.markdown("---")
-                    # Output the table below the add button (only for this row)
-                    # Use the same code as below, but only for this row
-                    st.markdown("#### <span style='color:#007BFF;'>Scoring Results</span>", unsafe_allow_html=True)
-                    header_cols = st.columns([2, 2, 2, 2])
-                    header_cols[0].markdown("<b>Caller</b>", unsafe_allow_html=True)
-                    header_cols[1].markdown("<b>Prediction</b>", unsafe_allow_html=True)
-                    header_cols[2].markdown("<b>Anomaly Score</b>", unsafe_allow_html=True)
-                    header_cols[3].markdown("<b>Add to blockchain</b>", unsafe_allow_html=True)
-                    for idx2, row2 in results_df.iterrows():
-                        # Only render the row that was just added
-                        if idx2 == idx:
-                            render_row(row2, idx2)
-                    st.stop()
                 except Exception as e:
                     cols[3].error(f"Error: {e}")
         else:
