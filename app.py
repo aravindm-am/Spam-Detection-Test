@@ -1163,8 +1163,11 @@ if 'scoring_results' not in st.session_state:
     st.session_state['scoring_results'] = None
 
 # After screening, store results in session state
-if notebook_output and "results" in notebook_output:
-    st.session_state['scoring_results'] = notebook_output["results"]
+try:
+    if 'notebook_output' in locals() and notebook_output and "results" in notebook_output:
+        st.session_state['scoring_results'] = notebook_output["results"]
+except Exception:
+    pass
 
 # Always render the table if results exist in session state
 if st.session_state.get('scoring_results'):
