@@ -740,7 +740,7 @@ with tabs[0]:
                         cols[1].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Prediction']}</span>", unsafe_allow_html=True)
                         cols[2].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Anomaly Score']}</span>", unsafe_allow_html=True)
                         if row['Prediction'] == 'Anomaly':
-                            add_key = f"add_{idx}_{row['Caller']}"
+                            add_key = f"add_{idx}_{row['Caller']}_{id(row)}"
                             if cols[3].button("Add", key=add_key):
                                 st.write(f"Button clicked for {row['Caller']}")
                                 payload = {
@@ -1152,7 +1152,7 @@ def render_scoring_results_table():
         cols[1].markdown(f"<span style='color:{color};'>{row['Prediction']}</span>", unsafe_allow_html=True)
         cols[2].markdown(f"<span style='color:{color};'>{row['Anomaly Score']}</span>", unsafe_allow_html=True)
         if row['Prediction'] == 'Anomaly':
-            add_key = f"add_{idx}_{row['Caller']}"
+            add_key = f"add_{idx}_{row['Caller']}_{id(row)}"
             if cols[3].button("Add", key=add_key):
                 payload = {
                     "requestId": "000001",
