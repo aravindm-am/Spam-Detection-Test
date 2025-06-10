@@ -1123,36 +1123,3 @@ with tabs[1]:
                         st.info("Number not found in dataset.")
         else:
             st.warning("📱 Please enter a valid phone number.")
-
-# Example scoring results data
-if 'scoring_results' not in st.session_state:
-    st.session_state['scoring_results'] = [
-        {"Caller": "918518408444", "Prediction": "Anomaly", "Anomaly Score": 0.02},
-        {"Caller": "917671705293", "Prediction": "Anomaly", "Anomaly Score": 0.02},
-        {"Caller": "919204485316", "Prediction": "Anomaly", "Anomaly Score": 0.01},
-        {"Caller": "918531111141", "Prediction": "Anomaly", "Anomaly Score": 0.01},
-        {"Caller": "917267973248", "Prediction": "Anomaly", "Anomaly Score": 0.01},
-        {"Caller": "918867712639", "Prediction": "Normal", "Anomaly Score": -0.20},
-        {"Caller": "917085387152", "Prediction": "Normal", "Anomaly Score": -0.19},
-        {"Caller": "919950983544", "Prediction": "Normal", "Anomaly Score": -0.19},
-        {"Caller": "917982292129", "Prediction": "Normal", "Anomaly Score": -0.19},
-        {"Caller": "917919846337", "Prediction": "Normal", "Anomaly Score": -0.19},
-    ]
-
-scoring_results = st.session_state['scoring_results']
-
-import streamlit as st
-import pandas as pd
-
-st.title("Scoring Results Table")
-
-# Display table with Add button for each anomaly
-for idx, row in enumerate(scoring_results):
-    cols = st.columns([2, 2, 2, 2])
-    color = 'red' if row['Prediction'] == 'Anomaly' else '#1a237e'
-    cols[0].markdown(f"<span style='color:{color};'>{row['Caller']}</span>", unsafe_allow_html=True)
-    cols[1].markdown(f"<span style='color:{color};'>{row['Prediction']}</span>", unsafe_allow_html=True)
-    cols[2].markdown(f"<span style='color:{color};'>{row['Anomaly Score']:.2f}</span>", unsafe_allow_html=True)
-    if row['Prediction'] == 'Anomaly':
-        if cols[3].button("Add", key=f"add_{idx}"):
-            st.success(f"Added {row['Caller']} to blockchain!")
