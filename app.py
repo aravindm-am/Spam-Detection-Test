@@ -781,6 +781,60 @@ with tabs[0]:
                 else:
                     st.warning("No results found in notebook output.")
                     
+    # --- Scoring Results Table State Management ---
+    if 'show_scoring_results' not in st.session_state:
+        st.session_state['show_scoring_results'] = False
+    if 'scoring_results' not in st.session_state:
+        st.session_state['scoring_results'] = []
+
+    # --- Always show scoring results table if flag is set ---
+    if st.session_state.get('show_scoring_results', False):
+        results_df = pd.DataFrame(st.session_state['scoring_results'])
+        if not results_df.empty:
+            results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
+            results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "")
+            results_df['Add to blockchain'] = ''
+            def render_row(row, idx):
+                cols = st.columns([2, 2, 2, 2])
+                color = 'red' if row['Prediction'] == 'Anomaly' else '#1a237e'
+                cols[0].markdown(f"<span style='color:{color};'>{row['Caller']}</span>", unsafe_allow_html=True)
+                cols[1].markdown(f"<span style='color:{color};'>{row['Prediction']}</span>", unsafe_allow_html=True)
+                cols[2].markdown(f"<span style='color:{color};'>{row['Anomaly Score']}</span>", unsafe_allow_html=True)
+                if row['Prediction'] == 'Anomaly':
+                    add_key = f"add_{idx}_{row['Caller']}"
+                    if cols[3].button("Add", key=add_key):
+                        payload = {
+                            "requestId": "000001",
+                            "module": "tmforum",
+                            "channelID": "globalspamdatachannel",
+                            "chaincodeID": "qotcc",
+                            "functionName": "addQoTRecord",
+                            "payload": {
+                                "msisdn": row['Caller'],
+                                "src_o": "Jio",
+                                "src_c": "India",
+                                "rep_o": "Airtel",
+                                "rep_c": "India",
+                                "score": float(row['Anomaly Score'])
+                            }
+                        }
+                        try:
+                            response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
+                            cols[3].success("Added!")
+                            cols[3].code(response.text, language="json")
+                        except Exception as e:
+                            cols[3].error(f"Error: {e}")
+                else:
+                    cols[3].markdown("")
+            # Table header
+            header_cols = st.columns([2, 2, 2, 2])
+            header_cols[0].markdown("<b>Caller</b>", unsafe_allow_html=True)
+            header_cols[1].markdown("<b>Prediction</b>", unsafe_allow_html=True)
+            header_cols[2].markdown("<b>Anomaly Score</b>", unsafe_allow_html=True)
+            header_cols[3].markdown("<b>Add to blockchain</b>", unsafe_allow_html=True)
+            for idx, row in results_df.iterrows():
+                render_row(row, idx)
+
     # Always show the hardcoded plots below the upload UI
     # Check if we have a real analysis or should use the hardcoded data
     if 'shap_data' in st.session_state and 'combined_analysis' in st.session_state.shap_data:
