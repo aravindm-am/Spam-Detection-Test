@@ -770,11 +770,7 @@ with tabs[0]:
 
                     # --- CSV Preview Section ---
                     st.markdown("#### <span style='color:#007BFF;'>CSV File Preview</span>", unsafe_allow_html=True)
-                    try:
-                        csv_df = pd.read_csv("sampled_predictions.csv")
-                        st.dataframe(csv_df.head(10), use_container_width=True, hide_index=True)
-                    except Exception as e:
-                        st.warning(f"Could not preview CSV: {e}")
+                    st.dataframe(results_df.head(7), use_container_width=True, hide_index=True)
                 else:
                     st.warning("No results found in notebook output.")
                     
