@@ -1127,10 +1127,12 @@ with api_tabs[1]:
 with api_tabs[2]:
     st.title("QoT Record API Interface")
     mode = st.selectbox("Select Operation", ["Insert/Update", "Read/Query"])
-    # If anomaly numbers exist, allow user to select from them
     anomaly_numbers = st.session_state.get('anomaly_numbers', {})
     selected_anomaly = None
     anomaly_score = 0.1432
+    # --- Store submitted MSISDNs in session state ---
+    if 'submitted_msisdns' not in st.session_state:
+        st.session_state['submitted_msisdns'] = []
     if mode == "Insert/Update" and anomaly_numbers:
         st.markdown("**Select an anomaly number from scoring results (or enter manually):**")
         selected_anomaly = st.selectbox("Anomaly Numbers", list(anomaly_numbers.keys()), key="anomaly_select")
@@ -1164,10 +1166,22 @@ with api_tabs[2]:
             try:
                 response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
                 st.code(response.text, language="json")
+                # --- Add to submitted_msisdns if not already present and msisdn is not empty ---
+                if msisdn and msisdn not in st.session_state['submitted_msisdns']:
+                    st.session_state['submitted_msisdns'].append(msisdn)
             except Exception as e:
                 st.error(f"Error: {e}")
     elif mode == "Read/Query":
         st.subheader("Read QoT Record")
+        # --- Dropdown for previously submitted MSISDNs ---
+        msisdn_options = st.session_state['submitted_msisdns']
+        msisdn_selected = None
+        if msisdn_options:
+            msisdn_selected = st.selectbox("Select previously submitted MSISDN", options=[""] + msisdn_options, index=0, key="read_msisdn_select")
+        # --- Manual entry still allowed ---
+        msisdn_manual = st.text_input("Or enter MSISDN (Phone Number)", value="", max_chars=15, key="read_msisdn_input")
+        # --- Use selected or manual ---
+        msisdn_to_query = msisdn_manual if msisdn_manual else (msisdn_selected if msisdn_selected else "")
         if st.button("Fetch Record"):
             payload = {
                 "requestId": "000001",
@@ -1175,28 +1189,10 @@ with api_tabs[2]:
                 "channelID": "globalspamdatachannel",
                 "chaincodeID": "qotcc",
                 "functionName": "getQoTRecord",
-                "payload": [msisdn]
+                "payload": [msisdn_to_query]
             }
             try:
                 response = requests.post(f"{API_BASE}/query/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
                 st.code(response.text, language="json")
             except Exception as e:
                 st.error(f"Error: {e}")
-    # Blockchain API Tab
-    elif selected_tab == "Blockchain API":
-        st.markdown("### <span style='color:#007BFF;'>Blockchain API</span>", unsafe_allow_html=True)
-        st.write("Interact directly with the blockchain API.")
-
-        # --- Anomaly number manual entry ---
-        anomaly_dict = st.session_state.get('anomaly_numbers', {})
-        msisdn_input = st.text_input(
-            "Enter Anomaly Number (MSISDN)",
-            value="",  # Default to empty
-            key="blockchain_anomaly_number_input"
-        )
-        if msisdn_input:
-            score = anomaly_dict.get(msisdn_input)
-            if score is not None:
-                st.write(f"Anomaly Score: {score}")
-            else:
-                st.info("This MSISDN is not in the current anomaly list.")
