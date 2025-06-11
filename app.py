@@ -757,20 +757,29 @@ with tabs[0]:
                             color = "#FF4B4B" if row["Prediction"] == "Anomaly" else "#1a237e"
                             add_btn_placeholder = ""
                             if row["Prediction"] == "Anomaly":
-                                add_btn_placeholder = f'<div id="add_btn_placeholder_{idx}"></div>'
-                                button_rows.append((idx, row))
+                                add_btn_placeholder = f'ADD_BUTTON_{row["Caller"]}'
+                                button_rows.append((idx, row, add_btn_placeholder))
                             html += f'<tr>' \
                                     f'<td style="color:{color};">{row["Caller"]}</td>' \
                                     f'<td style="color:{color};">{row["Prediction"]}</td>' \
                                     f'<td style="color:{color};">{row["Anomaly Score"]}</td>' \
-                                    f'<td>{add_btn_placeholder}</td>' \
+                                    f'<td>{{{add_btn_placeholder}}}</td>' \
                                     f'</tr>'
                         html += '</table>'
-                        st.markdown(html, unsafe_allow_html=True)
-                        # Render Streamlit buttons for anomaly rows
-                        for idx, row in button_rows:
+                        # Build a dict of placeholders to Streamlit buttons
+                        from streamlit import components
+                        button_html = {}
+                        for idx, row, placeholder in button_rows:
                             btn_key = f"add_btn_{row['Caller']}"
-                            if st.button("Add", key=btn_key):
+                            button_html[placeholder] = st.button("Add", key=btn_key)
+                        # Replace placeholders in HTML with actual buttons
+                        for placeholder, btn_val in button_html.items():
+                            html = html.replace(f'{{{placeholder}}}', f'<span></span>')
+                        st.markdown(html, unsafe_allow_html=True)
+                        # Now handle button clicks
+                        for idx, row, placeholder in button_rows:
+                            btn_key = f"add_btn_{row['Caller']}"
+                            if button_html[placeholder]:
                                 api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
                                 try:
                                     score_val = float(row["Anomaly Score"])
