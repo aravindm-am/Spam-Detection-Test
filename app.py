@@ -757,6 +757,15 @@ with tabs[0]:
                                 f'</tr>'
                     html += '</table>'
                     st.markdown(html, unsafe_allow_html=True)
+
+                    # --- Show preview of sample_predictions.csv from GitHub ---
+                    try:
+                        csv_url = "https://raw.githubusercontent.com/aravindm-am/Spam-Detection-Test/blob/main/sample_predictions.csv"  # Update with your actual username/repo if needed
+                        sample_df = pd.read_csv(csv_url)
+                        st.markdown("#### <span style='color:#007BFF;'>CSV Preview</span>", unsafe_allow_html=True)
+                        st.dataframe(sample_df.head(10), use_container_width=True)
+                    except Exception as e:
+                        st.warning(f"Could not load sample_predictions.csv: {e}")
                 else:
                     st.warning("No results found in notebook output.")
                     
