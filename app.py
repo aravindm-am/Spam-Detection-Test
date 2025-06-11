@@ -760,42 +760,12 @@ with api_tabs[0]:
 
                     # --- Show preview of sample_predictions.csv from GitHub ---
                     try:
-                        csv_url = "https://raw.githubusercontent.com/aravindm-am/Spam-Detection-Test/main/sample_predictions.csv"
+                        csv_url = "https://raw.githubusercontent.com/aravindm-am/Spam-Detection-Test/main/sample_predictions.csv"  # Update with your actual username/repo if needed
                         sample_df = pd.read_csv(csv_url)
                         st.markdown("#### <span style='color:#007BFF;'>CSV Preview</span>", unsafe_allow_html=True)
                         st.dataframe(sample_df.head(10), use_container_width=True)
                     except Exception as e:
                         st.warning(f"Could not load sample_predictions.csv: {e}")
-
-                    # --- Add anomaly numbers to blockchain via API ---
-                    st.markdown("#### <span style='color:#007BFF;'>Add Anomaly Numbers to Blockchain</span>", unsafe_allow_html=True)
-                    if st.button("Add All Anomalies to Blockchain", key="add_anomalies_blockchain"):
-                        responses = []
-                        for _, row in results_df.iterrows():
-                            if row["Prediction"] == "Anomaly":
-                                payload = {
-                                    "requestId": str(int(time.time() * 1000)),
-                                    "module": "tmforum",
-                                    "channelID": "globalspamdatachannel",
-                                    "chaincodeID": "qotcc",
-                                    "functionName": "addQoTRecord",
-                                    "payload": {
-                                        "msisdn": str(row["Caller"]),
-                                        "src_o": "Jio",
-                                        "src_c": "India",
-                                        "rep_o": "Airtel",
-                                        "rep_c": "India",
-                                        "score": float(row["Anomaly Score"])
-                                    }
-                                }
-                                try:
-                                    response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
-                                    responses.append(f"{row['Caller']}: {response.status_code} - {response.text}")
-                                except Exception as e:
-                                    responses.append(f"{row['Caller']}: Error {e}")
-                        st.success("Blockchain API responses:")
-                        for r in responses:
-                            st.write(r)
                 else:
                     st.warning("No results found in notebook output.")
                     
