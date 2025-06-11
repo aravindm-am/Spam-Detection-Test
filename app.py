@@ -1153,7 +1153,7 @@ with api_tabs[2]:
                 "chaincodeID": "qotcc",
                 "functionName": "addQoTRecord",
                 "payload": {
-                    "msisdn": msisdn,
+                    "msisdn": selected_anomaly,
                     "src_o": src_o,
                     "src_c": src_c,
                     "rep_o": rep_o,
@@ -1175,7 +1175,7 @@ with api_tabs[2]:
                 "channelID": "globalspamdatachannel",
                 "chaincodeID": "qotcc",
                 "functionName": "getQoTRecord",
-                "payload": [msisdn]
+                "payload": [selected_anomaly]
             }
             try:
                 response = requests.post(f"{API_BASE}/query/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
