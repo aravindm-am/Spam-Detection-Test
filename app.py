@@ -1195,6 +1195,6 @@ with api_tabs[2]:
                 st.code(record_response, language="json")
             except Exception as e:
                 st.error(f"Error: {e}")
-        if 'record_response' in locals() and record_response:
-            st.markdown("#### QoT Record Result")
-            st.code(record_response, language="json")
+        # if 'record_response' in locals() and record_response:
+        #     st.markdown("#### QoT Record Result")
+        #     st.code(record_response, language="json")
