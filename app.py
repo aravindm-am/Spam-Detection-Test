@@ -758,6 +758,16 @@ with api_tabs[0]:
                     html += '</table>'
                     st.markdown(html, unsafe_allow_html=True)
 
+                    # --- Store anomaly numbers and scores in session_state for Blockchain tab ---
+                    anomaly_dict = {}
+                    for _, row in results_df.iterrows():
+                        if row['Prediction'] == 'Anomaly' and row['Anomaly Score']:
+                            try:
+                                anomaly_dict[row['Caller']] = float(row['Anomaly Score'])
+                            except Exception:
+                                pass
+                    st.session_state['anomaly_numbers'] = anomaly_dict
+
                     # --- Show preview of sample_predictions.csv from GitHub ---
                     try:
                         csv_url = "https://raw.githubusercontent.com/aravindm-am/Spam-Detection-Test/main/sample_predictions.csv"  # Update with your actual username/repo if needed
