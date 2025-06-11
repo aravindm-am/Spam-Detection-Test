@@ -580,7 +580,7 @@ def run_notebook(phone_number):
 # st.title("📞 Telecom Fraud Detection")
 
 # Change the order of tabs - Combined Analysis first, Individual Analysis second
-api_tabs = st.tabs(["📊 Combined Analysis", "🔎 Individual Analysis", "🔗 Blockchain API"])
+api_tabs = st.tabs(["📊 Combined Analysis", "🔎 Individual Analysis", "🔗 Blockchain"])
 
 # --- Responsive height: inject JS to get viewport height and set in session_state ---
 if 'viewport_height' not in st.session_state:
@@ -1125,7 +1125,7 @@ with api_tabs[1]:
 
 # Tab 3: Blockchain API Interface
 with api_tabs[2]:
-    st.title("QoT Record API Interface")
+    st.title("QoT Record Interface")
     mode = st.selectbox("Select Operation", ["Insert/Update", "Read/Query"])
     anomaly_numbers = st.session_state.get('anomaly_numbers', {})
     selected_anomaly = None
@@ -1134,7 +1134,7 @@ with api_tabs[2]:
     if 'submitted_msisdns' not in st.session_state:
         st.session_state['submitted_msisdns'] = []
     if mode == "Insert/Update" and anomaly_numbers:
-        st.markdown("**Select an anomaly number from scoring results:**")
+        st.markdown("**Select an anomaly number:**")
         selected_anomaly = st.selectbox("Anomaly Numbers", list(anomaly_numbers.keys()), key="anomaly_select")
         msisdn = str(selected_anomaly) if selected_anomaly else ""
         anomaly_score = anomaly_numbers[selected_anomaly] if selected_anomaly else 0.1432
