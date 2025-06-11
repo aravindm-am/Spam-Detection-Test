@@ -18,10 +18,11 @@ API_BASE = "http://163.69.82.203:8095/tmf/v1"
 # Remove blank spaces before the title by injecting CSS to set margin-top: 0 for .block-container and .main
 st.markdown('''
 <style>
-.block-container { margin-top: 0 !important; padding-top: 0 !important; }
-section.main { padding-top: 0 !important; }
+body { margin-top: 0 !important; padding-top: 0 !important; }
+.block-container { margin-top: 24px !important; padding-top: 24px !important; }
+section.main { padding-top: 12px !important; }
 header[data-testid="stHeader"] { margin-bottom: 0 !important; padding-bottom: 0 !important; }
-.custom-header-box { margin-top: 0 !important; }
+.custom-header-box { margin-top: 12px !important; padding-top: 12px !important; }
 </style>
 ''', unsafe_allow_html=True)
 
