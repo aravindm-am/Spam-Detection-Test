@@ -53,12 +53,23 @@ st.markdown('''
   display: flex;
   align-items: center;
 }
+.custom-header-img img {
+  height: 64px;
+  width: auto;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  display: block;
+}
 .custom-header-img {
-  flex-shrink: 0;
-  margin-left: 32px;
   display: flex;
   align-items: center;
   height: 64px;
+  margin-top: 0 !important;
+}
+.custom-header-box {
+  align-items: center !important;
 }
 @media (max-width: 700px) {
   .custom-header-box { flex-direction: column; align-items: flex-start; padding: 18px 12px 12px 12px; }
