@@ -1136,7 +1136,7 @@ with api_tabs[2]:
     if mode == "Insert/Update" and anomaly_numbers:
         st.markdown("**Select an anomaly number from scoring results:**")
         selected_anomaly = st.selectbox("Anomaly Numbers", list(anomaly_numbers.keys()), key="anomaly_select")
-        msisdn = selected_anomaly
+        msisdn = str(selected_anomaly) if selected_anomaly else ""
         anomaly_score = anomaly_numbers[selected_anomaly] if selected_anomaly else 0.1432
     else:
         msisdn = ""
@@ -1155,7 +1155,7 @@ with api_tabs[2]:
                 "chaincodeID": "qotcc",
                 "functionName": "addQoTRecord",
                 "payload": {
-                    "msisdn": msisdn,
+                    "msisdn": str(msisdn),
                     "src_o": src_o,
                     "src_c": src_c,
                     "rep_o": rep_o,
@@ -1178,7 +1178,7 @@ with api_tabs[2]:
             msisdn_selected = st.selectbox("Select previously submitted MSISDN", options=msisdn_options, key="read_msisdn_select")
         else:
             st.info("No MSISDNs have been submitted yet.")
-        msisdn_to_query = msisdn_selected if msisdn_selected else ""
+        msisdn_to_query = str(msisdn_selected) if msisdn_selected else ""
         record_response = None
         if st.button("Fetch Record") and msisdn_to_query:
             payload = {
@@ -1187,7 +1187,7 @@ with api_tabs[2]:
                 "channelID": "globalspamdatachannel",
                 "chaincodeID": "qotcc",
                 "functionName": "getQoTRecord",
-                "payload": [msisdn_to_query]
+                "payload": [str(msisdn_to_query)]
             }
             try:
                 response = requests.post(f"{API_BASE}/query/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
