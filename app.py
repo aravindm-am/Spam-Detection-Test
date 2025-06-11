@@ -1131,62 +1131,42 @@ def render_scoring_results_table():
     results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "")
     results_df['Add to blockchain'] = ''
 
-    def render_row(row, idx):
-        cols = st.columns([2, 2, 2, 2])
-        color = 'red' if row['Prediction'] == 'Anomaly' else '#1a237e'
-        cols[0].markdown(f"<span style='color:{color};'>{row['Caller']}</span>", unsafe_allow_html=True)
-        cols[1].markdown(f"<span style='color:{color};'>{row['Prediction']}</span>", unsafe_allow_html=True)
-        cols[2].markdown(f"<span style='color:{color};'>{row['Anomaly Score']}</span>", unsafe_allow_html=True)
-        if row['Prediction'] == 'Anomaly':
-            add_key = f"add_{idx}_{row['Caller']}"
-            if cols[3].button("Add", key=add_key):
-                payload = {
-                    "requestId": "000001",
-                    "module": "tmforum",
-                    "channelID": "globalspamdatachannel",
-                    "chaincodeID": "qotcc",
-                    "functionName": "addQoTRecord",
-                    "payload": {
-                        "msisdn": str(row['Caller']),
-                        "src_o": "Jio",
-                        "src_c": "India",
-                        "rep_o": "Airtel",
-                        "rep_c": "India",
-                        "score": float(row['Anomaly Score'])
-                    }
-                }
-                try:
-                    response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
-                    cols[3].success("Added!")
-                    cols[3].code(response.text, language="json")
-                    # Display the scoring results table output here after add
-                    st.markdown("---")
-                    # Output the table below the add button (only for this row)
-                    # Use the same code as below, but only for this row
-                    st.markdown("#### <span style='color:#007BFF;'>Scoring Results</span>", unsafe_allow_html=True)
-                    header_cols = st.columns([2, 2, 2, 2])
-                    header_cols[0].markdown("<b>Caller</b>", unsafe_allow_html=True)
-                    header_cols[1].markdown("<b>Prediction</b>", unsafe_allow_html=True)
-                    header_cols[2].markdown("<b>Anomaly Score</b>", unsafe_allow_html=True)
-                    header_cols[3].markdown("<b>Add to blockchain</b>", unsafe_allow_html=True)
-                    for idx2, row2 in results_df.iterrows():
-                        # Only render the row that was just added
-                        if idx2 == idx:
-                            render_row(row2, idx2)
-                    st.stop()
-                except Exception as e:
-                    cols[3].error(f"Error: {e}")
-        else:
-            cols[3].markdown("")
+    # Sort: Anomaly first, then Normal
+    anomaly_rows = results_df[results_df['Prediction'] == 'Anomaly']
+    normal_rows = results_df[results_df['Prediction'] == 'Normal']
+    results_df = pd.concat([anomaly_rows, normal_rows], ignore_index=True)
 
-    header_cols = st.columns([2, 2, 2, 2])
-    header_cols[0].markdown("<b>Caller</b>", unsafe_allow_html=True)
-    header_cols[1].markdown("<b>Prediction</b>", unsafe_allow_html=True)
-    header_cols[2].markdown("<b>Anomaly Score</b>", unsafe_allow_html=True)
-    header_cols[3].markdown("<b>Add to blockchain</b>", unsafe_allow_html=True)
-    for idx, row in results_df.iterrows():
-        render_row(row, idx)
+    # Compact table CSS
+    st.markdown("""
+        <style>
+        .compact-table td, .compact-table th {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.95rem !important;
+            text-align: left !important;
+        }
+        .compact-table th { background: #f0f4fa; }
+        </style>
+    """, unsafe_allow_html=True)
 
-# Always render the table if results exist in session state
+    # Render compact HTML table with Add button for anomalies
+    def render_compact_table(df):
+        html = '<table class="compact-table" style="width:100%;border-collapse:collapse;">'
+        html += '<tr><th>Caller</th><th>Prediction</th><th>Anomaly Score</th><th>Add to blockchain</th></tr>'
+        for idx, row in df.iterrows():
+            color = "#FF4B4B" if row["Prediction"] == "Anomaly" else "#1a237e"
+            add_btn = ""
+            if row["Prediction"] == "Anomaly":
+                add_btn = f'<button style="background:#007BFF;color:#fff;border:none;border-radius:6px;padding:2px 12px;font-size:0.95rem;">Add</button>'
+            html += f'<tr>' \
+                    f'<td style="color:{color};">{row["Caller"]}</td>' \
+                    f'<td style="color:{color};">{row["Prediction"]}</td>' \
+                    f'<td style="color:{color};">{row["Anomaly Score"]}</td>' \
+                    f'<td>{add_btn}</td>' \
+                    f'</tr>'
+        html += '</table>'
+        st.markdown(html, unsafe_allow_html=True)
+
+    render_compact_table(results_df)
+
 if st.session_state.get('scoring_results'):
     render_scoring_results_table()
