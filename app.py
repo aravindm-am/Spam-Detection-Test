@@ -757,6 +757,35 @@ with tabs[0]:
                                 f'</tr>'
                     html += '</table>'
                     st.markdown(html, unsafe_allow_html=True)
+                    # --- Add Report Anomalies Button ---
+                    if st.button("Report Anomalies", key="report_anomalies_button"):
+                        api_url = f"{API_BASE}/invoke/"
+                        headers = {"Content-Type": "application/json"}
+                        responses = []
+                        for _, row in results_df.iterrows():
+                            if row["Prediction"] == "Anomaly":
+                                payload = {
+                                    "requestId": str(int(time.time() * 1000)),
+                                    "module": "tmforum",
+                                    "channelID": "globalspamdatachannel",
+                                    "chaincodeID": "qotcc",
+                                    "functionName": "addQoTRecord",
+                                    "payload": {
+                                        "msisdn": str(row["Caller"]),
+                                        "src_o": "Jio",
+                                        "src_c": "Saudi Arabia",
+                                        "rep_o": "Airtel",
+                                        "rep_c": "Saudi Arabia",
+                                        "score": float(row["Anomaly Score"])
+                                    }
+                                }
+                                try:
+                                    resp = requests.post(api_url, headers=headers, json=payload, timeout=10)
+                                    responses.append(f"{row['Caller']}: {resp.status_code}")
+                                except Exception as e:
+                                    responses.append(f"{row['Caller']}: Error {e}")
+                        st.success("Reported anomalies:")
+                        st.write("\n".join(responses))
                 else:
                     st.warning("No results found in notebook output.")
                     
