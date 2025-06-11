@@ -724,8 +724,10 @@ with tabs[0]:
                   # Display results table with caller, prediction, and anomaly_score
                     st.markdown("#### <span style='color:#007BFF;'>Scoring Results</span>", unsafe_allow_html=True)
                     results_df = pd.DataFrame(notebook_output["results"])
+                    # Save a copy of the original anomaly scores for API use
+                    results_df["Anomaly Score Raw"] = results_df[2] if results_df.shape[1] > 2 else results_df["Anomaly Score"]
                     # Rename columns for display
-                    results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
+                    results_df.columns = ['Caller', 'Prediction', 'Anomaly Score', 'Anomaly Score Raw'] if results_df.shape[1] > 3 else ['Caller', 'Prediction', 'Anomaly Score']
                     # Format anomaly scores to two decimal places as string
                     results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "")
                     # Sort: Anomaly first, then Normal
@@ -764,6 +766,13 @@ with tabs[0]:
                         responses = []
                         for _, row in results_df.iterrows():
                             if row["Prediction"] == "Anomaly":
+                                # Use the raw anomaly score if available, else fallback to formatted
+                                score_val = row["Anomaly Score Raw"] if "Anomaly Score Raw" in row else row["Anomaly Score"]
+                                try:
+                                    score_val = float(score_val)
+                                except Exception:
+                                    responses.append(f"{row['Caller']}: Invalid anomaly score, not reported.")
+                                    continue
                                 payload = {
                                     "requestId": str(int(time.time() * 1000)),
                                     "module": "tmforum",
@@ -776,7 +785,7 @@ with tabs[0]:
                                         "src_c": "Saudi Arabia",
                                         "rep_o": "Airtel",
                                         "rep_c": "Saudi Arabia",
-                                        "score": float(row["Anomaly Score"])
+                                        "score": score_val
                                     }
                                 }
                                 try:
