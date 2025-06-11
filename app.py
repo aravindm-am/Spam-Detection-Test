@@ -1168,5 +1168,6 @@ def render_scoring_results_table():
 
     render_compact_table(results_df)
 
+# Always render the table if results exist in session state
 if st.session_state.get('scoring_results'):
     render_scoring_results_table()
