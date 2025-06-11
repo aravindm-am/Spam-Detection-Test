@@ -748,59 +748,25 @@ with tabs[0]:
                         </style>
                     """, unsafe_allow_html=True)
 
-                    # --- Render compact HTML table with Add button for anomalies ---
-                    def render_compact_table_with_api(df):
+                    # Render compact HTML table with Add button for anomalies
+                    def render_compact_table(df):
                         html = '<table class="compact-table" style="width:100%;border-collapse:collapse;">'
                         html += '<tr><th>Caller</th><th>Prediction</th><th>Anomaly Score</th><th>Add to blockchain</th></tr>'
                         for idx, row in df.iterrows():
                             color = "#FF4B4B" if row["Prediction"] == "Anomaly" else "#1a237e"
+                            add_btn = ""  # Placeholder for Add button
+                            if row["Prediction"] == "Anomaly":
+                                add_btn = f'<button style="background:#007BFF;color:#fff;border:none;border-radius:6px;padding:2px 12px;font-size:0.95rem;">Add</button>'
                             html += f'<tr>' \
                                     f'<td style="color:{color};">{row["Caller"]}</td>' \
                                     f'<td style="color:{color};">{row["Prediction"]}</td>' \
-                                    f'<td style="color:{color};">{row["Anomaly Score"]}</td>'
-                            if row["Prediction"] == "Anomaly":
-                                html += f'<td>{{{{ADD_BTN_{idx}}}}}</td>'
-                            else:
-                                html += f'<td></td>'
-                            html += '</tr>'
+                                    f'<td style="color:{color};">{row["Anomaly Score"]}</td>' \
+                                    f'<td>{add_btn}</td>' \
+                                    f'</tr>'
                         html += '</table>'
-                        # Render table with placeholders
                         st.markdown(html, unsafe_allow_html=True)
-                        # Render Streamlit buttons for anomaly rows
-                        for idx, row in df.iterrows():
-                            if row["Prediction"] == "Anomaly":
-                                btn_key = f"add_btn_{row['Caller']}"
-                                if st.button("Add", key=btn_key):
-                                    api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
-                                    try:
-                                        score_val = float(row["Anomaly Score"])
-                                    except Exception:
-                                        score_val = 0.0
-                                    payload = {
-                                        "requestId": "000001",
-                                        "module": "tmforum",
-                                        "channelID": "globalspamdatachannel",
-                                        "chaincodeID": "qotcc",
-                                        "functionName": "addQoTRecord",
-                                        "payload": {
-                                            "msisdn": str(row["Caller"]),
-                                            "src_o": "Jio",
-                                            "src_c": "Saudi Arabia",
-                                            "rep_o": "Airtel",
-                                            "rep_c": "Saudi Arabia",
-                                            "score": score_val
-                                        }
-                                    }
-                                    try:
-                                        response = requests.post(api_url, json=payload, headers={"Content-Type": "application/json"})
-                                        if response.status_code == 200:
-                                            st.success(f"Added {row['Caller']} to blockchain successfully.")
-                                        else:
-                                            st.error(f"Failed to add {row['Caller']} to blockchain. Status: {response.status_code}")
-                                    except Exception as e:
-                                        st.error(f"API call failed: {e}")
 
-                    render_compact_table_with_api(results_df)
+                    render_compact_table(results_df)
 
                     # # --- CSV Preview Section ---
                     # st.markdown("#### <span style='color:#007BFF;'>CSV File Preview</span>", unsafe_allow_html=True)
