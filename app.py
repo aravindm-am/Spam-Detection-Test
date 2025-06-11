@@ -749,6 +749,42 @@ with tabs[0]:
                     html = '<table class="compact-table" style="width:100%;border-collapse:collapse;">'
                     html += '<tr><th>Caller</th><th>Prediction</th><th>Anomaly Score</th></tr>'
                     for _, row in results_df.iterrows():
+                      # Add button for each Anomaly row
+                      st.markdown("#### <span style='color:#FF4B4B;'>📤 Add Anomalous Numbers to Blockchain</span>", unsafe_allow_html=True)
+                      for idx, row in results_df.iterrows():
+                          if row["Prediction"] == "Anomaly":
+                              col1, col2, col3 = st.columns([3, 1, 1])
+                              col1.markdown(f"<span style='color:#FF4B4B;'>📱 {row['Caller']}</span>", unsafe_allow_html=True)
+                              if col2.button("Add", key=f"add_{idx}_{row['Caller']}"):
+                                  try:
+                                      payload = {
+                                          "requestId": "000001",
+                                          "module": "tmforum",
+                                          "channelID": "globalspamdatachannel",
+                                          "chaincodeID": "qotcc",
+                                          "functionName": "addQoTRecord",
+                                          "payload": {
+                                              "msisdn": str(row["Caller"]),  # must be string
+                                              "src_o": "Jio",
+                                              "src_c": "Saudi Arabia",
+                                              "rep_o": "Airtel",
+                                              "rep_c": "Saudi Arabia",
+                                              "score": float(row["Anomaly Score"])
+                                          }
+                                      }
+                                      response = requests.post(
+                                          f"{API_BASE}/invoke/",
+                                          headers={"Content-Type": "application/json"},
+                                          data=json.dumps(payload)
+                                      )
+                                      if response.status_code == 200:
+                                          col3.success("✅ Added!")
+                                      else:
+                                          col3.error("❌ Failed!")
+                                          col3.code(response.text, language="json")
+                                  except Exception as e:
+                                      col3.error(f"Error: {e}")
+
                         color = "#FF4B4B" if row["Prediction"] == "Anomaly" else "#1a237e"
                         html += f'<tr>' \
                                 f'<td style="color:{color};">{row["Caller"]}</td>' \
