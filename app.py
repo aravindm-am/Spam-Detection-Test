@@ -21,7 +21,7 @@ st.markdown('''
 .block-container { margin-top: 0 !important; padding-top: 0 !important; }
 section.main { padding-top: 0 !important; }
 header[data-testid="stHeader"] { margin-bottom: 0 !important; padding-bottom: 0 !important; }
-.custom-header-box { margin-top: 0 !important; }
+.custom-header-box { margin-top: 14px !important; }
 </style>
 ''', unsafe_allow_html=True)
 
@@ -724,60 +724,53 @@ with tabs[0]:
                   # Display results table with caller, prediction, and anomaly_score
                     st.markdown("#### <span style='color:#007BFF;'>Scoring Results</span>", unsafe_allow_html=True)
                     results_df = pd.DataFrame(notebook_output["results"])
-                    # Rename columns for display to match Image 2 and add blockchain column
+                    # Rename columns for display
                     results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
                     # Format anomaly scores to two decimal places as string
                     results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "")
                     # Add 'Add to blockchain' column (empty or with a button placeholder)
                     results_df['Add to blockchain'] = ''
 
-                                      
+                    # Sort: Anomaly first, then Normal
+                    anomaly_rows = results_df[results_df['Prediction'] == 'Anomaly']
+                    normal_rows = results_df[results_df['Prediction'] == 'Normal']
+                    results_df = pd.concat([anomaly_rows, normal_rows], ignore_index=True)
 
-                    # Display table with Add button for each anomaly
-                    def render_row(row, idx):
-                        cols = st.columns([2, 2, 2, 2])
-                        cols[0].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Caller']}</span>", unsafe_allow_html=True)
-                        cols[1].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Prediction']}</span>", unsafe_allow_html=True)
-                        cols[2].markdown(f"<span style='color:{'red' if row['Prediction']=='Anomaly' else '#1a237e'};'>{row['Anomaly Score']}</span>", unsafe_allow_html=True)
-                        if row['Prediction'] == 'Anomaly':
-                            add_key = f"add_{idx}_{row['Caller']}"
-                            if cols[3].button("Add", key=add_key):
-                                st.write(f"Button clicked for {row['Caller']}")
-                                payload = {
-                                    "requestId": "000001",
-                                    "module": "tmforum",
-                                    "channelID": "globalspamdatachannel",
-                                    "chaincodeID": "qotcc",
-                                    "functionName": "addQoTRecord",
-                                    "payload": {
-                                        "msisdn": row['Caller'],
-                                        "src_o": "Jio",
-                                        "src_c": "India",
-                                        "rep_o": "Airtel",
-                                        "rep_c": "India",
-                                        "score": float(row['Anomaly Score'])
-                                    }
-                                }
-                                try:
-                                    response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
-                                    
-                                    cols[3].success("Added!")
-                                    cols[3].code(response.text, language="json")
-                                except Exception as e:
-                                    cols[3].error(f"Error: {e}")
-                        else:
-                            cols[3].markdown("")
+                    # Compact table CSS
+                    st.markdown("""
+                        <style>
+                        .compact-table td, .compact-table th {
+                            padding: 0.25rem 0.5rem !important;
+                            font-size: 0.95rem !important;
+                            text-align: left !important;
+                        }
+                        .compact-table th { background: #f0f4fa; }
+                        </style>
+                    """, unsafe_allow_html=True)
 
-                    # Table header
-                    header_cols = st.columns([2, 2, 2, 2])
-                    header_cols[0].markdown("<b>Caller</b>", unsafe_allow_html=True)
-                    header_cols[1].markdown("<b>Prediction</b>", unsafe_allow_html=True)
-                    header_cols[2].markdown("<b>Anomaly Score</b>", unsafe_allow_html=True)
-                    header_cols[3].markdown("<b>Add to blockchain</b>", unsafe_allow_html=True)
+                    # Render compact HTML table with Add button for anomalies
+                    def render_compact_table(df):
+                        html = '<table class="compact-table" style="width:100%;border-collapse:collapse;">'
+                        html += '<tr><th>Caller</th><th>Prediction</th><th>Anomaly Score</th><th>Add to blockchain</th></tr>'
+                        for idx, row in df.iterrows():
+                            color = "#FF4B4B" if row["Prediction"] == "Anomaly" else "#1a237e"
+                            add_btn = ""  # Placeholder for Add button
+                            if row["Prediction"] == "Anomaly":
+                                add_btn = f'<button style="background:#007BFF;color:#fff;border:none;border-radius:6px;padding:2px 12px;font-size:0.95rem;">Add</button>'
+                            html += f'<tr>' \
+                                    f'<td style="color:{color};">{row["Caller"]}</td>' \
+                                    f'<td style="color:{color};">{row["Prediction"]}</td>' \
+                                    f'<td style="color:{color};">{row["Anomaly Score"]}</td>' \
+                                    f'<td>{add_btn}</td>' \
+                                    f'</tr>'
+                        html += '</table>'
+                        st.markdown(html, unsafe_allow_html=True)
 
-                    # Render each row
-                    for idx, row in results_df.iterrows():
-                        render_row(row, idx)
+                    render_compact_table(results_df)
+
+                    # # --- CSV Preview Section ---
+                    # st.markdown("#### <span style='color:#007BFF;'>CSV File Preview</span>", unsafe_allow_html=True)
+                    # st.dataframe(results_df.head(7), use_container_width=True, hide_index=True)
                 else:
                     st.warning("No results found in notebook output.")
                     
@@ -1123,77 +1116,3 @@ with tabs[1]:
                         st.info("Number not found in dataset.")
         else:
             st.warning("📱 Please enter a valid phone number.")
-
-# --- Scoring Results Table State Management ---
-if 'scoring_results' not in st.session_state:
-    st.session_state['scoring_results'] = None
-
-# After screening, store results in session state
-if 'notebook_output' in locals() and notebook_output and "results" in notebook_output:
-    st.session_state['scoring_results'] = notebook_output["results"]
-
-def render_scoring_results_table():
-    results_df = pd.DataFrame(st.session_state['scoring_results'])
-    results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
-    results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "")
-    results_df['Add to blockchain'] = ''
-
-    def render_row(row, idx):
-        cols = st.columns([2, 2, 2, 2])
-        color = 'red' if row['Prediction'] == 'Anomaly' else '#1a237e'
-        cols[0].markdown(f"<span style='color:{color};'>{row['Caller']}</span>", unsafe_allow_html=True)
-        cols[1].markdown(f"<span style='color:{color};'>{row['Prediction']}</span>", unsafe_allow_html=True)
-        cols[2].markdown(f"<span style='color:{color};'>{row['Anomaly Score']}</span>", unsafe_allow_html=True)
-        if row['Prediction'] == 'Anomaly':
-            add_key = f"add_{idx}_{row['Caller']}"
-            if cols[3].button("Add", key=add_key):
-                payload = {
-                    "requestId": "000001",
-                    "module": "tmforum",
-                    "channelID": "globalspamdatachannel",
-                    "chaincodeID": "qotcc",
-                    "functionName": "addQoTRecord",
-                    "payload": {
-                        "msisdn": str(row['Caller']),
-                        "src_o": "Jio",
-                        "src_c": "India",
-                        "rep_o": "Airtel",
-                        "rep_c": "India",
-                        "score": float(row['Anomaly Score'])
-                    }
-                }
-                try:
-                    response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
-                    cols[3].success("Added!")
-                    cols[3].code(response.text, language="json")
-                    # Display the scoring results table output here after add
-                    st.markdown("---")
-                    # Output the table below the add button (only for this row)
-                    # Use the same code as below, but only for this row
-                    st.markdown("#### <span style='color:#007BFF;'>Scoring Results</span>", unsafe_allow_html=True)
-                    header_cols = st.columns([2, 2, 2, 2])
-                    header_cols[0].markdown("<b>Caller</b>", unsafe_allow_html=True)
-                    header_cols[1].markdown("<b>Prediction</b>", unsafe_allow_html=True)
-                    header_cols[2].markdown("<b>Anomaly Score</b>", unsafe_allow_html=True)
-                    header_cols[3].markdown("<b>Add to blockchain</b>", unsafe_allow_html=True)
-                    for idx2, row2 in results_df.iterrows():
-                        # Only render the row that was just added
-                        if idx2 == idx:
-                            render_row(row2, idx2)
-                    st.stop()
-                except Exception as e:
-                    cols[3].error(f"Error: {e}")
-        else:
-            cols[3].markdown("")
-
-    header_cols = st.columns([2, 2, 2, 2])
-    header_cols[0].markdown("<b>Caller</b>", unsafe_allow_html=True)
-    header_cols[1].markdown("<b>Prediction</b>", unsafe_allow_html=True)
-    header_cols[2].markdown("<b>Anomaly Score</b>", unsafe_allow_html=True)
-    header_cols[3].markdown("<b>Add to blockchain</b>", unsafe_allow_html=True)
-    for idx, row in results_df.iterrows():
-        render_row(row, idx)
-
-# Always render the table if results exist in session state
-if st.session_state.get('scoring_results'):
-    render_scoring_results_table()
