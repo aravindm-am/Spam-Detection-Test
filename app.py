@@ -758,14 +758,15 @@ with api_tabs[0]:
                     html += '</table>'
                     st.markdown(html, unsafe_allow_html=True)
 
-                    # --- Store anomaly numbers and scores in session_state for Blockchain tab ---
+                    # --- Populate anomaly_numbers in session_state for Blockchain tab ---
                     anomaly_dict = {}
                     for _, row in results_df.iterrows():
-                        if row['Prediction'] == 'Anomaly' and row['Anomaly Score']:
+                        if row['Prediction'] == 'Anomaly':
                             try:
-                                anomaly_dict[row['Caller']] = float(row['Anomaly Score'])
-                            except Exception:
-                                pass
+                                score = float(row['Anomaly Score'])
+                            except:
+                                score = 0.0
+                            anomaly_dict[row['Caller']] = score
                     st.session_state['anomaly_numbers'] = anomaly_dict
 
                     # --- Show preview of sample_predictions.csv from GitHub ---
