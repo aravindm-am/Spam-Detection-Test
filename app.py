@@ -1182,6 +1182,7 @@ with api_tabs[2]:
         msisdn_manual = st.text_input("Or enter MSISDN (Phone Number)", value="", max_chars=15, key="read_msisdn_input")
         # --- Use selected or manual ---
         msisdn_to_query = msisdn_manual if msisdn_manual else (msisdn_selected if msisdn_selected else "")
+        record_response = None
         if st.button("Fetch Record"):
             payload = {
                 "requestId": "000001",
@@ -1193,6 +1194,12 @@ with api_tabs[2]:
             }
             try:
                 response = requests.post(f"{API_BASE}/query/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
-                st.code(response.text, language="json")
+                record_response = response.text
+                st.code(record_response, language="json")
             except Exception as e:
                 st.error(f"Error: {e}")
+        # --- Always show the two options (dropdown and manual entry) ---
+        # --- If a record was fetched, display it below the options ---
+        if 'record_response' in locals() and record_response:
+            st.markdown("#### QoT Record Result")
+            st.code(record_response, language="json")
