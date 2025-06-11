@@ -580,7 +580,7 @@ def run_notebook(phone_number):
 # st.title("📞 Telecom Fraud Detection")
 
 # Change the order of tabs - Combined Analysis first, Individual Analysis second
-api_tabs = st.tabs(["📊 Combined Analysis", "🔎 Individual Analysis", "🔗 Blockchain"])
+api_tabs = st.tabs(["📊 Combined Analysis", "🔎 Individual Analysis", "🔗 Blockchain API"])
 
 # --- Responsive height: inject JS to get viewport height and set in session_state ---
 if 'viewport_height' not in st.session_state:
@@ -1125,7 +1125,7 @@ with api_tabs[1]:
 
 # Tab 3: Blockchain API Interface
 with api_tabs[2]:
-    st.title("QoT Interface")
+    st.title("QoT Record API Interface")
     mode = st.selectbox("Select Operation", ["Insert/Update", "Read/Query"])
     # If anomaly numbers exist, allow user to select from them
     anomaly_numbers = st.session_state.get('anomaly_numbers', {})
@@ -1134,7 +1134,7 @@ with api_tabs[2]:
     if mode == "Insert/Update" and anomaly_numbers:
         st.markdown("**Select an anomaly number from scoring results (or enter manually):**")
         selected_anomaly = st.selectbox("Anomaly Numbers", list(anomaly_numbers.keys()), key="anomaly_select")
-        msisdn = st.text_input("Phone Number", max_chars=15, key="msisdn_input")
+        msisdn = st.text_input("MSISDN (Phone Number)", value=selected_anomaly, max_chars=15, key="msisdn_input")
         anomaly_score = anomaly_numbers[selected_anomaly] if selected_anomaly else 0.1432
     else:
         msisdn = st.text_input("MSISDN (Phone Number)", max_chars=15, key="msisdn_input")
@@ -1153,7 +1153,7 @@ with api_tabs[2]:
                 "chaincodeID": "qotcc",
                 "functionName": "addQoTRecord",
                 "payload": {
-                    "msisdn": selected_anomaly,
+                    "msisdn": msisdn,
                     "src_o": src_o,
                     "src_c": src_c,
                     "rep_o": rep_o,
@@ -1175,7 +1175,7 @@ with api_tabs[2]:
                 "channelID": "globalspamdatachannel",
                 "chaincodeID": "qotcc",
                 "functionName": "getQoTRecord",
-                "payload": [selected_anomaly]
+                "payload": [msisdn]
             }
             try:
                 response = requests.post(f"{API_BASE}/query/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
