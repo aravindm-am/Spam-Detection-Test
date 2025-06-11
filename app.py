@@ -23,58 +23,39 @@ body { margin-top: 0 !important; padding-top: 0 !important; }
 section.main { padding-top: 12px !important; }
 header[data-testid="stHeader"] { margin-bottom: 0 !important; padding-bottom: 0 !important; }
 .custom-header-box { margin-top: 12px !important; padding-top: 12px !important; }
-.custom-header-img { display: flex; justify-content: center; align-items: center; width: 100%; }
-.custom-header-img img { display: block; margin-left: auto; margin-right: auto; max-width: 180px; height: auto; }
+.custom-header-flex {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  width: 100%;
+}
+.custom-header-img img {
+  max-width: 60px;
+  height: auto;
+  display: block;
+}
+.custom-header-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+}
 </style>
 ''', unsafe_allow_html=True)
 
 # --- Custom header with image on the right ---
 st.markdown('''
 <div class="custom-header-box">
-  <div class="custom-header-title">
-    <span style="font-size:2.8rem;font-weight:800;color:#1a237e;vertical-align:middle;">📞 Telecom Fraud Detection</span>
-  </div>
-  <div class="custom-header-img">
-    <img src="https://passionateaboutoss.com/directory/wp-content/uploads/2019/09/Subex_logo_png-397112561.png" alt="Telecom Logo" style="height:64px;width:auto;object-fit:contain;" />
+  <div class="custom-header-flex">
+    <div class="custom-header-img">
+      <img src="https://passionateaboutoss.com/directory/wp-content/uploads/2019/09/Subex_logo_png-397112561.png" alt="Telecom Logo" style="height:64px;width:auto;object-fit:contain;" />
+    </div>
+    <div class="custom-header-title">
+      📞 Telecom Fraud Detection
+    </div>
   </div>
 </div>
-<style>
-.custom-header-box {
-  display: flex;
-  align-items: center !important;
-  justify-content: space-between;
-  background: #f7f9fb;
-  border-radius: 24px;
-  box-shadow: 0 2px 12px rgba(30, 34, 90, 0.07);
-  padding: 32px 40px 24px 32px;
-  margin-bottom: 18px;
-  margin-top: 0;
-  min-height: 80px;
-}
-.custom-header-img {
-  flex-shrink: 0;
-  margin-left: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-  min-height: 64px;
-  min-width: 120px;
-}
-.custom-header-img img {
-  height: 64px;
-  width: auto;
-  object-fit: contain;
-  vertical-align: middle;
-  margin: 0 auto !important;
-  display: block;
-  max-height: 100%;
-}
-@media (max-width: 700px) {
-  .custom-header-box { flex-direction: column; align-items: flex-start; padding: 18px 12px 12px 12px; }
-  .custom-header-img { margin-left: 0; margin-top: 12px; justify-content: center; }
-}
-</style>
 ''', unsafe_allow_html=True)
 
 # --- Custom CSS for full-width layout, removing centering, and reducing top spacing ---
@@ -1076,60 +1057,4 @@ with tabs[1]:
                     else:
                         st.warning("Prediction not available for this number.")
                         not_found = True
-                    if 'anomaly_score' in shap_data and shap_data['anomaly_score'] is not None:
-                        st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>Anomaly Score</b>: <code>{shap_data['anomaly_score']:.4f}</code></span>", unsafe_allow_html=True)
-                    if 'explanation' in shap_data and shap_data['explanation']:
-                        st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>AI Explanation</b>: {shap_data['explanation']}</span>", unsafe_allow_html=True)
-
-                    # Only show feature importance if present in shap_data
-                    if 'feature_importance' in shap_data and shap_data['feature_importance']:
-                        feature_importance_df = pd.DataFrame({
-                            'Feature': list(shap_data['feature_importance'].keys()),
-                            'Importance': list(shap_data['feature_importance'].values())
-                        }).sort_values('Importance', ascending=False)
-
-                        # Prepare data for waterfall plot
-                        waterfall_data = shap_data['feature_contributions']
-                        features = list(waterfall_data.keys())
-                        shap_values = [waterfall_data[f]['shap_value'] for f in features]
-
-                        tab1, tab2 = st.tabs(["📊 Feature Importance", "🔍 Waterfall"])
-
-                        with tab1:
-                            st.markdown("### 📊 Individual Feature Importance")
-                            fig_importance = px.bar(
-                                    feature_importance_df, 
-                                    x='Importance', 
-                                    y='Feature', 
-                                    orientation='h',
-                                    color='Importance',
-                                    color_continuous_scale='Blues'
-                                )
-                            fig_importance.update_layout(title="Individual Feature Importance")
-                            st.plotly_chart(fig_importance, use_container_width=True)
-                                              
-
-                        with tab2:
-                            fig_waterfall = go.Figure(go.Waterfall(
-                                name="SHAP Values", 
-                                orientation="h",
-                                y=features,
-                                x=shap_values,
-                                connector={"line":{"color":"rgb(63, 63, 63)"}},
-                                decreasing={"marker":{"color":"#FF4B4B"}},
-                                increasing={"marker":{"color":"#007BFF"}},
-                                base=shap_data['base_value']
-                            ))
-                            fig_waterfall.update_layout(
-                                title="SHAP Waterfall Plot",
-                                xaxis_title="SHAP Value",
-                                yaxis_title="Feature",
-                                showlegend=False
-                            )
-                            st.plotly_chart(fig_waterfall, use_container_width=True)
-                    else:
-                        not_found = True
-                    if not_found:
-                        st.info("Number not found in dataset.")
-        else:
-            st.warning("📱 Please enter a valid phone number.")
+                    if 'anomaly_score' in shap_data and shap_data['anomaly_score'
