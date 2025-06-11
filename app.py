@@ -1134,12 +1134,12 @@ with api_tabs[2]:
     if 'submitted_msisdns' not in st.session_state:
         st.session_state['submitted_msisdns'] = []
     if mode == "Insert/Update" and anomaly_numbers:
-        st.markdown("**Select an anomaly number from scoring results (or enter manually):**")
+        st.markdown("**Select an anomaly number from scoring results:**")
         selected_anomaly = st.selectbox("Anomaly Numbers", list(anomaly_numbers.keys()), key="anomaly_select")
-        msisdn = st.text_input("MSISDN (Phone Number)", value=selected_anomaly, max_chars=15, key="msisdn_input")
+        msisdn = selected_anomaly
         anomaly_score = anomaly_numbers[selected_anomaly] if selected_anomaly else 0.1432
     else:
-        msisdn = st.text_input("MSISDN (Phone Number)", max_chars=15, key="msisdn_input")
+        msisdn = ""
     if mode == "Insert/Update":
         st.subheader("Insert or Update QoT Record")
         src_o = st.text_input("Source Operator", "Jio")
@@ -1166,24 +1166,21 @@ with api_tabs[2]:
             try:
                 response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
                 st.code(response.text, language="json")
-                # --- Add to submitted_msisdns if not already present and msisdn is not empty ---
                 if msisdn and msisdn not in st.session_state['submitted_msisdns']:
                     st.session_state['submitted_msisdns'].append(msisdn)
             except Exception as e:
                 st.error(f"Error: {e}")
     elif mode == "Read/Query":
         st.subheader("Read QoT Record")
-        # --- Dropdown for previously submitted MSISDNs ---
         msisdn_options = st.session_state['submitted_msisdns']
         msisdn_selected = None
         if msisdn_options:
-            msisdn_selected = st.selectbox("Select previously submitted MSISDN", options=[""] + msisdn_options, index=0, key="read_msisdn_select")
-        # --- Manual entry still allowed ---
-        msisdn_manual = st.text_input("Or enter MSISDN (Phone Number)", value="", max_chars=15, key="read_msisdn_input")
-        # --- Use selected or manual ---
-        msisdn_to_query = msisdn_manual if msisdn_manual else (msisdn_selected if msisdn_selected else "")
+            msisdn_selected = st.selectbox("Select previously submitted MSISDN", options=msisdn_options, key="read_msisdn_select")
+        else:
+            st.info("No MSISDNs have been submitted yet.")
+        msisdn_to_query = msisdn_selected if msisdn_selected else ""
         record_response = None
-        if st.button("Fetch Record"):
+        if st.button("Fetch Record") and msisdn_to_query:
             payload = {
                 "requestId": "000001",
                 "module": "tmforum",
@@ -1198,8 +1195,6 @@ with api_tabs[2]:
                 st.code(record_response, language="json")
             except Exception as e:
                 st.error(f"Error: {e}")
-        # --- Always show the two options (dropdown and manual entry) ---
-        # --- If a record was fetched, display it below the options ---
         if 'record_response' in locals() and record_response:
             st.markdown("#### QoT Record Result")
             st.code(record_response, language="json")
