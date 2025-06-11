@@ -38,7 +38,7 @@ st.markdown('''
 <style>
 .custom-header-box {
   display: flex;
-  align-items: center;
+  align-items: center !important;
   justify-content: space-between;
   background: #f7f9fb;
   border-radius: 24px;
@@ -48,32 +48,28 @@ st.markdown('''
   margin-top: 0;
   min-height: 80px;
 }
-.custom-header-title {
-  flex: 1;
+.custom-header-img {
+  flex-shrink: 0;
+  margin-left: 32px;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  min-height: 64px;
+  min-width: 120px;
 }
 .custom-header-img img {
   height: 64px;
   width: auto;
   object-fit: contain;
   vertical-align: middle;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
+  margin: 0 auto !important;
   display: block;
-}
-.custom-header-img {
-  display: flex;
-  align-items: center;
-  height: 64px;
-  margin-top: 0 !important;
-}
-.custom-header-box {
-  align-items: center !important;
+  max-height: 100%;
 }
 @media (max-width: 700px) {
   .custom-header-box { flex-direction: column; align-items: flex-start; padding: 18px 12px 12px 12px; }
-  .custom-header-img { margin-left: 0; margin-top: 12px; }
+  .custom-header-img { margin-left: 0; margin-top: 12px; justify-content: center; }
 }
 </style>
 ''', unsafe_allow_html=True)
