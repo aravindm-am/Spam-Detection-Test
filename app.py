@@ -768,9 +768,9 @@ with tabs[0]:
 
                     render_compact_table(results_df)
 
-                    # --- CSV Preview Section ---
-                    st.markdown("#### <span style='color:#007BFF;'>CSV File Preview</span>", unsafe_allow_html=True)
-                    st.dataframe(results_df.head(7), use_container_width=True, hide_index=True)
+                    # # --- CSV Preview Section ---
+                    # st.markdown("#### <span style='color:#007BFF;'>CSV File Preview</span>", unsafe_allow_html=True)
+                    # st.dataframe(results_df.head(7), use_container_width=True, hide_index=True)
                 else:
                     st.warning("No results found in notebook output.")
                     
