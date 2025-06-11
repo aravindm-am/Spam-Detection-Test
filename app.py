@@ -748,64 +748,59 @@ with tabs[0]:
                         </style>
                     """, unsafe_allow_html=True)
 
-                    # Render compact HTML table with Add button for anomalies
-                    def render_compact_table(df):
-                        # Use a unique key for each button
+                    # --- Render compact HTML table with Add button placeholder ---
+                    def render_compact_table_with_buttons(df):
+                        html = '<table class="compact-table" style="width:100%;border-collapse:collapse;">'
+                        html += '<tr><th>Caller</th><th>Prediction</th><th>Anomaly Score</th><th>Add to blockchain</th></tr>'
+                        button_rows = []
                         for idx, row in df.iterrows():
                             color = "#FF4B4B" if row["Prediction"] == "Anomaly" else "#1a237e"
-                            add_btn = ""
+                            add_btn_placeholder = ""
                             if row["Prediction"] == "Anomaly":
-                                btn_key = f"add_btn_{row['Caller']}"
-                                # Use Streamlit columns to place button in table
-                                cols = st.columns([2, 2, 2, 2])
-                                with cols[0]:
-                                    st.markdown(f'<span style="color:{color};">{row["Caller"]}</span>', unsafe_allow_html=True)
-                                with cols[1]:
-                                    st.markdown(f'<span style="color:{color};">{row["Prediction"]}</span>', unsafe_allow_html=True)
-                                with cols[2]:
-                                    st.markdown(f'<span style="color:{color};">{row["Anomaly Score"]}</span>', unsafe_allow_html=True)
-                                with cols[3]:
-                                    if st.button("Add", key=btn_key):
-                                        # Prepare API payload
-                                        api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
-                                        payload = {
-                                            "requestId": "000001",
-                                            "module": "tmforum",
-                                            "channelID": "globalspamdatachannel",
-                                            "chaincodeID": "qotcc",
-                                            "functionName": "addQoTRecord",
-                                            "payload": {
-                                                "msisdn": str(row["Caller"]),
-                                                "src_o": "Jio",
-                                                "src_c": "Saudi Arabia",
-                                                "rep_o": "Airtel",
-                                                "rep_c": "Saudi Arabia",
-                                                "score": float(row["Anomaly Score"])
-                                            }
-                                        }
-                                        try:
-                                            response = requests.post(api_url, json=payload, headers={"Content-Type": "application/json"})
-                                            if response.status_code == 200:
-                                                st.success(f"Added {row['Caller']} to blockchain successfully.")
-                                            else:
-                                                st.error(f"Failed to add {row['Caller']} to blockchain. Status: {response.status_code}")
-                                        except Exception as e:
-                                            st.error(f"API call failed: {e}")
-                        # For normal rows, just print as markdown
-                        for idx, row in df.iterrows():
-                            if row["Prediction"] != "Anomaly":
-                                color = "#1a237e"
-                                cols = st.columns([2, 2, 2, 2])
-                                with cols[0]:
-                                    st.markdown(f'<span style="color:{color};">{row["Caller"]}</span>', unsafe_allow_html=True)
-                                with cols[1]:
-                                    st.markdown(f'<span style="color:{color};">{row["Prediction"]}</span>', unsafe_allow_html=True)
-                                with cols[2]:
-                                    st.markdown(f'<span style="color:{color};">{row["Anomaly Score"]}</span>', unsafe_allow_html=True)
-                                with cols[3]:
-                                    st.markdown("")
+                                add_btn_placeholder = f'<div id="add_btn_placeholder_{idx}"></div>'
+                                button_rows.append((idx, row))
+                            html += f'<tr>' \
+                                    f'<td style="color:{color};">{row["Caller"]}</td>' \
+                                    f'<td style="color:{color};">{row["Prediction"]}</td>' \
+                                    f'<td style="color:{color};">{row["Anomaly Score"]}</td>' \
+                                    f'<td>{add_btn_placeholder}</td>' \
+                                    f'</tr>'
+                        html += '</table>'
+                        st.markdown(html, unsafe_allow_html=True)
+                        # Render Streamlit buttons for anomaly rows
+                        for idx, row in button_rows:
+                            btn_key = f"add_btn_{row['Caller']}"
+                            if st.button("Add", key=btn_key):
+                                api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
+                                try:
+                                    score_val = float(row["Anomaly Score"])
+                                except Exception:
+                                    score_val = 0.0
+                                payload = {
+                                    "requestId": "000001",
+                                    "module": "tmforum",
+                                    "channelID": "globalspamdatachannel",
+                                    "chaincodeID": "qotcc",
+                                    "functionName": "addQoTRecord",
+                                    "payload": {
+                                        "msisdn": str(row["Caller"]),
+                                        "src_o": "Jio",
+                                        "src_c": "Saudi Arabia",
+                                        "rep_o": "Airtel",
+                                        "rep_c": "Saudi Arabia",
+                                        "score": score_val
+                                    }
+                                }
+                                try:
+                                    response = requests.post(api_url, json=payload, headers={"Content-Type": "application/json"})
+                                    if response.status_code == 200:
+                                        st.success(f"Added {row['Caller']} to blockchain successfully.")
+                                    else:
+                                        st.error(f"Failed to add {row['Caller']} to blockchain. Status: {response.status_code}")
+                                except Exception as e:
+                                    st.error(f"API call failed: {e}")
 
-                    render_compact_table(results_df)
+                    render_compact_table_with_buttons(results_df)
 
                     # # --- CSV Preview Section ---
                     # st.markdown("#### <span style='color:#007BFF;'>CSV File Preview</span>", unsafe_allow_html=True)
