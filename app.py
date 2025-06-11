@@ -750,21 +750,60 @@ with tabs[0]:
 
                     # Render compact HTML table with Add button for anomalies
                     def render_compact_table(df):
-                        html = '<table class="compact-table" style="width:100%;border-collapse:collapse;">'
-                        html += '<tr><th>Caller</th><th>Prediction</th><th>Anomaly Score</th><th>Add to blockchain</th></tr>'
+                        # Use a unique key for each button
                         for idx, row in df.iterrows():
                             color = "#FF4B4B" if row["Prediction"] == "Anomaly" else "#1a237e"
-                            add_btn = ""  # Placeholder for Add button
+                            add_btn = ""
                             if row["Prediction"] == "Anomaly":
-                                add_btn = f'<button style="background:#007BFF;color:#fff;border:none;border-radius:6px;padding:2px 12px;font-size:0.95rem;">Add</button>'
-                            html += f'<tr>' \
-                                    f'<td style="color:{color};">{row["Caller"]}</td>' \
-                                    f'<td style="color:{color};">{row["Prediction"]}</td>' \
-                                    f'<td style="color:{color};">{row["Anomaly Score"]}</td>' \
-                                    f'<td>{add_btn}</td>' \
-                                    f'</tr>'
-                        html += '</table>'
-                        st.markdown(html, unsafe_allow_html=True)
+                                btn_key = f"add_btn_{row['Caller']}"
+                                # Use Streamlit columns to place button in table
+                                cols = st.columns([2, 2, 2, 2])
+                                with cols[0]:
+                                    st.markdown(f'<span style="color:{color};">{row["Caller"]}</span>', unsafe_allow_html=True)
+                                with cols[1]:
+                                    st.markdown(f'<span style="color:{color};">{row["Prediction"]}</span>', unsafe_allow_html=True)
+                                with cols[2]:
+                                    st.markdown(f'<span style="color:{color};">{row["Anomaly Score"]}</span>', unsafe_allow_html=True)
+                                with cols[3]:
+                                    if st.button("Add", key=btn_key):
+                                        # Prepare API payload
+                                        api_url = "http://163.69.82.203:8095/tmf/v1/invoke/"
+                                        payload = {
+                                            "requestId": "000001",
+                                            "module": "tmforum",
+                                            "channelID": "globalspamdatachannel",
+                                            "chaincodeID": "qotcc",
+                                            "functionName": "addQoTRecord",
+                                            "payload": {
+                                                "msisdn": str(row["Caller"]),
+                                                "src_o": "Jio",
+                                                "src_c": "Saudi Arabia",
+                                                "rep_o": "Airtel",
+                                                "rep_c": "Saudi Arabia",
+                                                "score": float(row["Anomaly Score"])
+                                            }
+                                        }
+                                        try:
+                                            response = requests.post(api_url, json=payload, headers={"Content-Type": "application/json"})
+                                            if response.status_code == 200:
+                                                st.success(f"Added {row['Caller']} to blockchain successfully.")
+                                            else:
+                                                st.error(f"Failed to add {row['Caller']} to blockchain. Status: {response.status_code}")
+                                        except Exception as e:
+                                            st.error(f"API call failed: {e}")
+                        # For normal rows, just print as markdown
+                        for idx, row in df.iterrows():
+                            if row["Prediction"] != "Anomaly":
+                                color = "#1a237e"
+                                cols = st.columns([2, 2, 2, 2])
+                                with cols[0]:
+                                    st.markdown(f'<span style="color:{color};">{row["Caller"]}</span>', unsafe_allow_html=True)
+                                with cols[1]:
+                                    st.markdown(f'<span style="color:{color};">{row["Prediction"]}</span>', unsafe_allow_html=True)
+                                with cols[2]:
+                                    st.markdown(f'<span style="color:{color};">{row["Anomaly Score"]}</span>', unsafe_allow_html=True)
+                                with cols[3]:
+                                    st.markdown("")
 
                     render_compact_table(results_df)
 
