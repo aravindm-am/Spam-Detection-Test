@@ -1116,14 +1116,24 @@ with api_tabs[1]:
 with api_tabs[2]:
     st.title("QoT Record API Interface")
     mode = st.selectbox("Select Operation", ["Insert/Update", "Read/Query"])
-    msisdn = st.text_input("MSISDN (Phone Number)", max_chars=15)
+    # If anomaly numbers exist, allow user to select from them
+    anomaly_numbers = st.session_state.get('anomaly_numbers', {})
+    selected_anomaly = None
+    anomaly_score = 0.1432
+    if mode == "Insert/Update" and anomaly_numbers:
+        st.markdown("**Select an anomaly number from scoring results (or enter manually):**")
+        selected_anomaly = st.selectbox("Anomaly Numbers", list(anomaly_numbers.keys()), key="anomaly_select")
+        msisdn = st.text_input("MSISDN (Phone Number)", value=selected_anomaly, max_chars=15, key="msisdn_input")
+        anomaly_score = anomaly_numbers[selected_anomaly] if selected_anomaly else 0.1432
+    else:
+        msisdn = st.text_input("MSISDN (Phone Number)", max_chars=15, key="msisdn_input")
     if mode == "Insert/Update":
         st.subheader("Insert or Update QoT Record")
         src_o = st.text_input("Source Operator", "Jio")
         src_c = st.text_input("Source Country", "India")
         rep_o = st.text_input("Reported Operator", "Airtel")
         rep_c = st.text_input("Reported Country", "India")
-        score = st.number_input("Score", min_value=0.0, max_value=1.0, value=0.1432, step=0.01)
+        score = st.number_input("Score", min_value=0.0, max_value=1.0, value=anomaly_score, step=0.01, key="score_input")
         if st.button("Submit"):
             payload = {
                 "requestId": "000001",
