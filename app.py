@@ -1182,3 +1182,21 @@ with api_tabs[2]:
                 st.code(response.text, language="json")
             except Exception as e:
                 st.error(f"Error: {e}")
+    # Blockchain API Tab
+    elif selected_tab == "Blockchain API":
+        st.markdown("### <span style='color:#007BFF;'>Blockchain API</span>", unsafe_allow_html=True)
+        st.write("Interact directly with the blockchain API.")
+
+        # --- Anomaly number manual entry ---
+        anomaly_dict = st.session_state.get('anomaly_numbers', {})
+        msisdn_input = st.text_input(
+            "Enter Anomaly Number (MSISDN)",
+            value="",  # Default to empty
+            key="blockchain_anomaly_number_input"
+        )
+        if msisdn_input:
+            score = anomaly_dict.get(msisdn_input)
+            if score is not None:
+                st.write(f"Anomaly Score: {score}")
+            else:
+                st.info("This MSISDN is not in the current anomaly list.")
