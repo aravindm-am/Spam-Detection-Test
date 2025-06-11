@@ -785,6 +785,9 @@ with tabs[0]:
                                   except Exception as e:
                                       col3.error(f"Error: {e}")
 
+                    html = '<table class="compact-table" style="width:100%;border-collapse:collapse;">'
+                    html += '<tr><th>Caller</th><th>Prediction</th><th>Anomaly Score</th></tr>'
+                    for _, row in results_df.iterrows():
                         color = "#FF4B4B" if row["Prediction"] == "Anomaly" else "#1a237e"
                         html += f'<tr>' \
                                 f'<td style="color:{color};">{row["Caller"]}</td>' \
@@ -792,7 +795,7 @@ with tabs[0]:
                                 f'<td style="color:{color};">{row["Anomaly Score"]}</td>' \
                                 f'</tr>'
                     html += '</table>'
-                    st.markdown(html, unsafe_allow_html=True)
+                    st.markdown(html, unsafe_allow_html=True)                  
                 else:
                     st.warning("No results found in notebook output.")
                     
