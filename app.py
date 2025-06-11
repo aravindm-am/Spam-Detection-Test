@@ -1134,7 +1134,7 @@ with api_tabs[2]:
     if mode == "Insert/Update" and anomaly_numbers:
         st.markdown("**Select an anomaly number from scoring results (or enter manually):**")
         selected_anomaly = st.selectbox("Anomaly Numbers", list(anomaly_numbers.keys()), key="anomaly_select")
-        msisdn = st.text_input("MSISDN (Phone Number)", value=selected_anomaly, max_chars=15, key="msisdn_input")
+        msisdn = st.text_input("MSISDN (Phone Number)", max_chars=15, key="msisdn_input")
         anomaly_score = anomaly_numbers[selected_anomaly] if selected_anomaly else 0.1432
     else:
         msisdn = st.text_input("MSISDN (Phone Number)", max_chars=15, key="msisdn_input")
