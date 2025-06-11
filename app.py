@@ -21,7 +21,7 @@ st.markdown('''
 .block-container { margin-top: 0 !important; padding-top: 0 !important; }
 section.main { padding-top: 0 !important; }
 header[data-testid="stHeader"] { margin-bottom: 0 !important; padding-bottom: 0 !important; }
-.custom-header-box { margin-top: 0 !important; }
+.custom-header-box { margin-top: 5px !important; }
 </style>
 ''', unsafe_allow_html=True)
 
