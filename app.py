@@ -1068,7 +1068,7 @@ with api_tabs[1]:
                 if result == "SUCCESS":
                     st.success("🎉 Analysis complete!")
                     # After getting notebook_output (the JSON string)
-                    shap_data = json.loads(notebook_output)
+                    shap_data = notebook_output
                     st.session_state['shap_data'] = shap_data
 
                     st.subheader("📞 Prediction Summary")
