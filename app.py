@@ -1155,12 +1155,29 @@ with api_tabs[2]:
         selected_anomaly = st.selectbox("Anomaly Numbers", list(anomaly_numbers.keys()), key="anomaly_select")
         msisdn = str(selected_anomaly) if selected_anomaly else ""
         anomaly_score = anomaly_numbers[selected_anomaly] if selected_anomaly else 0.1432
+        # --- Auto-populate Operator and Country from scoring results ---
+        # Try to get the last scoring results from session_state
+        operator = ""
+        country = ""
+        if 'scoring_results' in st.session_state:
+            # scoring_results is a list of dicts
+            for r in st.session_state['scoring_results']:
+                if str(r.get('caller')) == msisdn:
+                    operator = r.get('caller_operator', "")
+                    country = r.get('caller_country', "")
+                    break
+        else:
+            # fallback: try to get from anomaly_dict if available
+            operator = ""
+            country = ""
     else:
         msisdn = ""
+        operator = ""
+        country = ""
     if mode == "Insert/Update":
         st.subheader("Insert or Update QoT Record")
-        src_o = st.text_input("Source Operator", "Jio")
-        src_c = st.text_input("Source Country", "India")
+        src_o = st.text_input("Source Operator", operator or "Jio")
+        src_c = st.text_input("Source Country", country or "India")
         rep_o = "Airtel"   #st.text_input("Reported Operator", "Airtel")
         rep_c = "India     "#st.text_input("Reported Country", "India")
         score = st.number_input("Score", min_value=0.0, max_value=1.0, value=anomaly_score, step=0.01, key="score_input")
