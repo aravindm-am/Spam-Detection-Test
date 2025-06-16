@@ -579,17 +579,7 @@ def run_notebook(phone_number):
 # ''', unsafe_allow_html=True)
 # st.title("📞 Telecom Fraud Detection")
 
-# --- Tab switching logic before creating tabs ---
-default_tab = 0
-if st.session_state.get('switch_to_blockchain_tab', False):
-    default_tab = 2  # Blockchain tab index
-    st.session_state['switch_to_blockchain_tab'] = False
-
-# Use st.experimental_set_query_params to set the tab in the URL
-if default_tab == 2:
-    st.experimental_set_query_params(tab='blockchain')
-
-# Create tabs (Streamlit does not support programmatic tab selection, but this will update the URL for user reference)
+# Change the order of tabs - Combined Analysis first, Individual Analysis second
 api_tabs = st.tabs(["📊 Combined Analysis", "🔎 Individual Analysis", "🔗 Blockchain"])
 
 # --- Responsive height: inject JS to get viewport height and set in session_state ---
@@ -779,8 +769,9 @@ with api_tabs[0]:
                             anomaly_dict[row['Caller']] = score
                     st.session_state['anomaly_numbers'] = anomaly_dict
 
-                    # --- Button to switch to Blockchain tab ---
-                    if st.button("Go to Blockchain tab", key="go_blockchain_btn"):
+                    # --- Add to blockchain feature: just redirect to Blockchain tab ---
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    if st.button("Add to blockchain", key="add_to_blockchain_btn"):
                         st.session_state['switch_to_blockchain_tab'] = True
                         st.experimental_rerun()
 
