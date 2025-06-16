@@ -758,6 +758,23 @@ with api_tabs[0]:
                     html += '</table>'
                     st.markdown(html, unsafe_allow_html=True)
 
+                    # --- Populate anomaly_numbers in session_state for Blockchain tab ---
+                    anomaly_dict = {}
+                    for _, row in results_df.iterrows():
+                        if row['Prediction'] == 'Anomaly':
+                            try:
+                                score = float(row['Anomaly Score'])
+                            except:
+                                score = 0.0
+                            anomaly_dict[row['Caller']] = score
+                    st.session_state['anomaly_numbers'] = anomaly_dict
+
+                    # --- Add to blockchain feature: just redirect to Blockchain tab ---
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    if st.button("Add to blockchain", key="add_to_blockchain_btn"):
+                        st.session_state['switch_to_blockchain_tab'] = True
+                        st.experimental_rerun()
+
                     # --- Show preview of sample_predictions.csv from GitHub ---
                     try:
                         csv_url = "https://raw.githubusercontent.com/aravindm-am/Spam-Detection-Test/main/spam_call_dataset_updated.csv"  # Update with your actual username/repo if needed
