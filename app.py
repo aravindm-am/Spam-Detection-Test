@@ -771,7 +771,7 @@ with api_tabs[0]:
 
                     # --- Show preview of sample_predictions.csv from GitHub ---
                     try:
-                        csv_url = "https://raw.githubusercontent.com/aravindm-am/Spam-Detection-Test/main/sample_predictions.csv"  # Update with your actual username/repo if needed
+                        csv_url = "https://raw.githubusercontent.com/aravindm-am/Spam-Detection-Test/main/spam_call_dataset_updated.csv"  # Update with your actual username/repo if needed
                         sample_df = pd.read_csv(csv_url)
                         st.markdown("#### <span style='color:#007BFF;'>CSV Preview</span>", unsafe_allow_html=True)
                         st.dataframe(sample_df.head(10), use_container_width=True)
