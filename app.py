@@ -1132,6 +1132,7 @@ with api_tabs[1]:
 # Tab 3: Blockchain API Interface
 with api_tabs[2]:
     st.title("QoT Record Interface")
+    mode = st.selectbox("Select Operation", ["Insert/Update", "Read/Query"])
     # Switch to Blockchain tab if requested
     if st.session_state.get('switch_to_blockchain_tab', False):
         st.session_state['switch_to_blockchain_tab'] = False
