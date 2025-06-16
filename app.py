@@ -769,6 +769,21 @@ with api_tabs[0]:
                             anomaly_dict[row['Caller']] = score
                     st.session_state['anomaly_numbers'] = anomaly_dict
 
+                    # --- Add to blockchain feature ---
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    if 'anomaly_numbers' in st.session_state and st.session_state['anomaly_numbers']:
+                        selected_anomaly = st.selectbox(
+                            "Select anomaly number to add to blockchain:",
+                            options=list(st.session_state['anomaly_numbers'].keys()),
+                            key="anomaly_blockchain_select"
+                        )
+                        if st.button("Add to blockchain", key="add_to_blockchain_btn"):
+                            st.session_state['selected_anomaly_for_blockchain'] = selected_anomaly
+                            st.session_state['switch_to_blockchain_tab'] = True
+                            st.experimental_rerun()
+                    else:
+                        st.info("No anomaly numbers available to add to blockchain.")
+
                     # --- Show preview of sample_predictions.csv from GitHub ---
                     try:
                         csv_url = "https://raw.githubusercontent.com/aravindm-am/Spam-Detection-Test/main/spam_call_dataset_updated.csv"  # Update with your actual username/repo if needed
