@@ -1061,13 +1061,15 @@ with api_tabs[1]:
     run_button = st.button("Run Fraud Check", key="run_check_button")
     
     if run_button:
+        st.session_state['shap_data'] = None  # or {}
         if phone_number.strip():
             with st.spinner("Subex Spam Scoring Started..."):
                 result, notebook_output = run_notebook(phone_number.strip())
                 if result == "SUCCESS":
                     st.success("🎉 Analysis complete!")
-                    shap_data = notebook_output
-                    st.session_state.shap_data = shap_data
+                    # After getting notebook_output (the JSON string)
+                    shap_data = json.loads(notebook_output)
+                    st.session_state['shap_data'] = shap_data
 
                     st.subheader("📞 Prediction Summary")
                     st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>Phone Number</b>: <code>{phone_number}</code></span>", unsafe_allow_html=True)
