@@ -761,6 +761,9 @@ with api_tabs[0]:
                     html += '</table>'
                     st.markdown(html, unsafe_allow_html=True)
 
+                    # Save the raw results for use in Blockchain tab
+                    st.session_state['scoring_results'] = notebook_output["results"]
+
                     # --- Populate anomaly_numbers in session_state for Blockchain tab ---
                     anomaly_dict = {}
                     for _, row in results_df.iterrows():
