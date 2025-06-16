@@ -721,11 +721,12 @@ with api_tabs[0]:
                             except:
                                 pass
                 if notebook_output and "results" in notebook_output:
-                  # Display results table with caller, prediction, and anomaly_score
+                  # Display results table with caller, prediction, anomaly_score, country, and operator
                     st.markdown("#### <span style='color:#007BFF;'>Scoring Results</span>", unsafe_allow_html=True)
                     results_df = pd.DataFrame(notebook_output["results"])
-                    # Rename columns for display
-                    results_df.columns = ['Caller', 'Prediction', 'Anomaly Score']
+                    # Select and rename columns for display
+                    results_df = results_df[['caller', 'prediction', 'anomaly_score', 'caller_country', 'caller_operator']]
+                    results_df.columns = ['Caller', 'Prediction', 'Anomaly Score', 'Country', 'Operator']
                     # Format anomaly scores to two decimal places as string
                     results_df['Anomaly Score'] = results_df['Anomaly Score'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "")
                     # Sort: Anomaly first, then Normal
@@ -745,15 +746,17 @@ with api_tabs[0]:
                         </style>
                     """, unsafe_allow_html=True)
 
-                    # Render compact HTML table
+                    # Render compact HTML table with new columns
                     html = '<table class="compact-table" style="width:100%;border-collapse:collapse;">'
-                    html += '<tr><th>Caller</th><th>Prediction</th><th>Anomaly Score</th></tr>'
+                    html += '<tr><th>Caller</th><th>Prediction</th><th>Anomaly Score</th><th>Country</th><th>Operator</th></tr>'
                     for _, row in results_df.iterrows():
-                        color = "#FF4B4B" if row["Prediction"] == "Anomaly" else "#1a237e"
+                        color = "#FF4B4B" if row["Prediction"] == 'Anomaly' else "#1a237e"
                         html += f'<tr>' \
                                 f'<td style="color:{color};">{row["Caller"]}</td>' \
                                 f'<td style="color:{color};">{row["Prediction"]}</td>' \
                                 f'<td style="color:{color};">{row["Anomaly Score"]}</td>' \
+                                f'<td style="color:{color};">{row["Country"]}</td>' \
+                                f'<td style="color:{color};">{row["Operator"]}</td>' \
                                 f'</tr>'
                     html += '</table>'
                     st.markdown(html, unsafe_allow_html=True)
