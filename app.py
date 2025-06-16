@@ -769,20 +769,11 @@ with api_tabs[0]:
                             anomaly_dict[row['Caller']] = score
                     st.session_state['anomaly_numbers'] = anomaly_dict
 
-                    # --- Add to blockchain feature ---
+                    # --- Add to blockchain feature: just redirect to Blockchain tab ---
                     st.markdown("<br>", unsafe_allow_html=True)
-                    if 'anomaly_numbers' in st.session_state and st.session_state['anomaly_numbers']:
-                        selected_anomaly = st.selectbox(
-                            "Select anomaly number to add to blockchain:",
-                            options=list(st.session_state['anomaly_numbers'].keys()),
-                            key="anomaly_blockchain_select"
-                        )
-                        if st.button("Add to blockchain", key="add_to_blockchain_btn"):
-                            st.session_state['selected_anomaly_for_blockchain'] = selected_anomaly
-                            st.session_state['switch_to_blockchain_tab'] = True
-                            st.experimental_rerun()
-                    else:
-                        st.info("No anomaly numbers available to add to blockchain.")
+                    if st.button("Add to blockchain", key="add_to_blockchain_btn"):
+                        st.session_state['switch_to_blockchain_tab'] = True
+                        st.experimental_rerun()
 
                     # --- Show preview of sample_predictions.csv from GitHub ---
                     try:
@@ -1141,10 +1132,17 @@ with api_tabs[1]:
 # Tab 3: Blockchain API Interface
 with api_tabs[2]:
     st.title("QoT Record Interface")
-    mode = st.selectbox("Select Operation", ["Insert/Update", "Read/Query"])
+    # Switch to Blockchain tab if requested
+    if st.session_state.get('switch_to_blockchain_tab', False):
+        st.session_state['switch_to_blockchain_tab'] = False
+        st.session_state['blockchain_tab_selected'] = True
+        st.experimental_set_query_params(tab=2)
+    # Pre-select anomaly if coming from Combined Analysis
     anomaly_numbers = st.session_state.get('anomaly_numbers', {})
     selected_anomaly = None
-    anomaly_score = 0.1432
+    if 'selected_anomaly_for_blockchain' in st.session_state:
+        selected_anomaly = st.session_state.pop('selected_anomaly_for_blockchain')
+    anomaly_score = anomaly_numbers[selected_anomaly] if selected_anomaly and selected_anomaly in anomaly_numbers else 0.1432
     # --- Store submitted MSISDNs in session state ---
     if 'submitted_msisdns' not in st.session_state:
         st.session_state['submitted_msisdns'] = []
