@@ -1161,8 +1161,8 @@ with api_tabs[2]:
         st.subheader("Insert or Update QoT Record")
         src_o = st.text_input("Source Operator", "Jio")
         src_c = st.text_input("Source Country", "India")
-        # rep_o = st.text_input("Reported Operator", "Airtel")
-        # rep_c = st.text_input("Reported Country", "India")
+        rep_o = st.text_input("Reported Operator", "Airtel")
+        rep_c = st.text_input("Reported Country", "India")
         score = st.number_input("Score", min_value=0.0, max_value=1.0, value=anomaly_score, step=0.01, key="score_input")
         if st.button("Submit"):
             payload = {
@@ -1175,8 +1175,8 @@ with api_tabs[2]:
                     "msisdn": str(msisdn),
                     "src_o": src_o,
                     "src_c": src_c,
-                    # "rep_o": rep_o,
-                    # "rep_c": rep_c,
+                    "rep_o": rep_o,
+                    "rep_c": rep_c,
                     "score": score
                 }
             }
