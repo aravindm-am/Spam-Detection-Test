@@ -569,11 +569,15 @@ def run_notebook(phone_number):
 
     return result_state, notebook_output
 
-# --- Tab switching logic before creating tabs ---
-default_tab = 0
-if st.session_state.get('switch_to_blockchain_tab', False):
-    default_tab = 2  # Blockchain tab index
-    st.session_state['switch_to_blockchain_tab'] = False
+# # Streamlit UI
+# # Remove blank spaces before the title by injecting CSS to set margin-top: 0 for .block-container and .main
+# st.markdown('''
+# <style>
+# .block-container { margin-top: 0 !important; }
+# section.main { padding-top: 0 !important; }
+# </style>
+# ''', unsafe_allow_html=True)
+# st.title("📞 Telecom Fraud Detection")
 
 # Change the order of tabs - Combined Analysis first, Individual Analysis second
 api_tabs = st.tabs(["📊 Combined Analysis", "🔎 Individual Analysis", "🔗 Blockchain"])
@@ -1067,4 +1071,144 @@ with api_tabs[1]:
                     else:
                         st.warning("Prediction not available for this number.")
                         not_found = True
-                    if 'anomaly_score' in shap_data and shap_data['anomaly_score'
+                    if 'anomaly_score' in shap_data and shap_data['anomaly_score'] is not None:
+                        st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>Anomaly Score</b>: <code>{shap_data['anomaly_score']:.4f}</code></span>", unsafe_allow_html=True)
+                    if 'explanation' in shap_data and shap_data['explanation']:
+                        st.markdown(f"<span style='font-size:1.1rem;color:#374151;'><b>AI Explanation</b>: {shap_data['explanation']}</span>", unsafe_allow_html=True)
+
+                    # Only show feature importance if present in shap_data
+                    if 'feature_importance' in shap_data and shap_data['feature_importance']:
+                        feature_importance_df = pd.DataFrame({
+                            'Feature': list(shap_data['feature_importance'].keys()),
+                            'Importance': list(shap_data['feature_importance'].values())
+                        }).sort_values('Importance', ascending=False)
+
+                        # Prepare data for waterfall plot
+                        waterfall_data = shap_data['feature_contributions']
+                        features = list(waterfall_data.keys())
+                        shap_values = [waterfall_data[f]['shap_value'] for f in features]
+
+                        tab1, tab2 = st.tabs(["📊 Feature Importance", "🔍 Waterfall"])
+
+                        with tab1:
+                            st.markdown("### 📊 Individual Feature Importance")
+                            fig_importance = px.bar(
+                                    feature_importance_df, 
+                                    x='Importance', 
+                                    y='Feature', 
+                                    orientation='h',
+                                    color='Importance',
+                                    color_continuous_scale='Blues'
+                                )
+                            fig_importance.update_layout(title="Individual Feature Importance")
+                            st.plotly_chart(fig_importance, use_container_width=True)
+                                              
+
+                        with tab2:
+                            fig_waterfall = go.Figure(go.Waterfall(
+                                name="SHAP Values", 
+                                orientation="h",
+                                y=features,
+                                x=shap_values,
+                                connector={"line":{"color":"rgb(63, 63, 63)"}},
+                                decreasing={"marker":{"color":"#FF4B4B"}},
+                                increasing={"marker":{"color":"#007BFF"}},
+                                base=shap_data['base_value']
+                            ))
+                            fig_waterfall.update_layout(
+                                title="SHAP Waterfall Plot",
+                                xaxis_title="SHAP Value",
+                                yaxis_title="Feature",
+                                showlegend=False
+                            )
+                            st.plotly_chart(fig_waterfall, use_container_width=True)
+                    else:
+                        not_found = True
+                    if not_found:
+                        st.info("Number not found in dataset.")
+        else:
+            st.warning("📱 Please enter a valid phone number.")
+
+# Tab 3: Blockchain API Interface
+with api_tabs[2]:
+    st.title("QoT Record Interface")
+    mode = st.selectbox("Select Operation", ["Insert/Update", "Read/Query"])
+    # Switch to Blockchain tab if requested
+    if st.session_state.get('switch_to_blockchain_tab', False):
+        st.session_state['switch_to_blockchain_tab'] = False
+        st.session_state['blockchain_tab_selected'] = True
+        st.experimental_set_query_params(tab=2)
+    # Pre-select anomaly if coming from Combined Analysis
+    anomaly_numbers = st.session_state.get('anomaly_numbers', {})
+    selected_anomaly = None
+    if 'selected_anomaly_for_blockchain' in st.session_state:
+        selected_anomaly = st.session_state.pop('selected_anomaly_for_blockchain')
+    anomaly_score = anomaly_numbers[selected_anomaly] if selected_anomaly and selected_anomaly in anomaly_numbers else 0.1432
+    # --- Store submitted MSISDNs in session state ---
+    if 'submitted_msisdns' not in st.session_state:
+        st.session_state['submitted_msisdns'] = []
+    if mode == "Insert/Update" and anomaly_numbers:
+        st.markdown("**Select an anomaly number:**")
+        selected_anomaly = st.selectbox("Anomaly Numbers", list(anomaly_numbers.keys()), key="anomaly_select")
+        msisdn = str(selected_anomaly) if selected_anomaly else ""
+        anomaly_score = anomaly_numbers[selected_anomaly] if selected_anomaly else 0.1432
+    else:
+        msisdn = ""
+    if mode == "Insert/Update":
+        st.subheader("Insert or Update QoT Record")
+        src_o = st.text_input("Source Operator", "Jio")
+        src_c = st.text_input("Source Country", "India")
+        rep_o = st.text_input("Reported Operator", "Airtel")
+        rep_c = st.text_input("Reported Country", "India")
+        score = st.number_input("Score", min_value=0.0, max_value=1.0, value=anomaly_score, step=0.01, key="score_input")
+        if st.button("Submit"):
+            payload = {
+                "requestId": "000001",
+                "module": "tmforum",
+                "channelID": "globalspamdatachannel",
+                "chaincodeID": "qotcc",
+                "functionName": "addQoTRecord",
+                "payload": {
+                    "msisdn": str(msisdn),
+                    "src_o": src_o,
+                    "src_c": src_c,
+                    "rep_o": rep_o,
+                    "rep_c": rep_c,
+                    "score": score
+                }
+            }
+            try:
+                response = requests.post(f"{API_BASE}/invoke/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
+                st.code(response.text, language="json")
+                if msisdn and msisdn not in st.session_state['submitted_msisdns']:
+                    st.session_state['submitted_msisdns'].append(msisdn)
+            except Exception as e:
+                st.error(f"Error: {e}")
+    elif mode == "Read/Query":
+        st.subheader("Read QoT Record")
+        msisdn_options = st.session_state['submitted_msisdns']
+        msisdn_selected = None
+        if msisdn_options:
+            msisdn_selected = st.selectbox("Select previously submitted MSISDN", options=msisdn_options, key="read_msisdn_select")
+        else:
+            st.info("No MSISDNs have been submitted yet.")
+        msisdn_to_query = str(msisdn_selected) if msisdn_selected else ""
+        record_response = None
+        if st.button("Fetch Record") and msisdn_to_query:
+            payload = {
+                "requestId": "000001",
+                "module": "tmforum",
+                "channelID": "globalspamdatachannel",
+                "chaincodeID": "qotcc",
+                "functionName": "getQoTRecord",
+                "payload": [str(msisdn_to_query)]
+            }
+            try:
+                response = requests.post(f"{API_BASE}/query/", headers={"Content-Type": "application/json"}, data=json.dumps(payload))
+                record_response = response.text
+                st.code(record_response, language="json")
+            except Exception as e:
+                st.error(f"Error: {e}")
+        # if 'record_response' in locals() and record_response:
+        #     st.markdown("#### QoT Record Result")
+        #     st.code(record_response, language="json")
