@@ -579,7 +579,17 @@ def run_notebook(phone_number):
 # ''', unsafe_allow_html=True)
 # st.title("📞 Telecom Fraud Detection")
 
-# Change the order of tabs - Combined Analysis first, Individual Analysis second
+# --- Tab switching logic before creating tabs ---
+default_tab = 0
+if st.session_state.get('switch_to_blockchain_tab', False):
+    default_tab = 2  # Blockchain tab index
+    st.session_state['switch_to_blockchain_tab'] = False
+
+# Use st.experimental_set_query_params to set the tab in the URL
+if default_tab == 2:
+    st.experimental_set_query_params(tab='blockchain')
+
+# Create tabs (Streamlit does not support programmatic tab selection, but this will update the URL for user reference)
 api_tabs = st.tabs(["📊 Combined Analysis", "🔎 Individual Analysis", "🔗 Blockchain"])
 
 # --- Responsive height: inject JS to get viewport height and set in session_state ---
