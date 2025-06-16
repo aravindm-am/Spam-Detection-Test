@@ -769,11 +769,11 @@ with api_tabs[0]:
                             anomaly_dict[row['Caller']] = score
                     st.session_state['anomaly_numbers'] = anomaly_dict
 
-                    # --- Add to blockchain feature: just redirect to Blockchain tab ---
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("Add to blockchain", key="add_to_blockchain_btn"):
-                        st.session_state['switch_to_blockchain_tab'] = True
-                        st.experimental_rerun()
+                    # # --- Add to blockchain feature: just redirect to Blockchain tab ---
+                    # st.markdown("<br>", unsafe_allow_html=True)
+                    # if st.button("Add to blockchain", key="add_to_blockchain_btn"):
+                    #     st.session_state['switch_to_blockchain_tab'] = True
+                    #     st.experimental_rerun()
 
                     # --- Show preview of sample_predictions.csv from GitHub ---
                     try:
